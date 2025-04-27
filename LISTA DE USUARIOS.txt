@@ -1,0 +1,109 @@
+ADMINISTRADOR:
+
+Nombre: Carlos Mendoza
+Correo: admin@correo.pe
+Contraseña: admin123
+
+
+
+ESTUDIANTES:
+
+Nombre: Lucía Ramírez
+Correo: lucia.ramirez@correo.pe
+Contraseña: lucia123
+
+
+Nombre: Diego Torres
+Correo: diego.torres@correo.pe
+Contraseña: diego123
+
+
+Nombre: María Vásquez
+Correo: maria.vasquez@correo.pe
+Contraseña: maria123
+
+
+Nombre: José Fernández
+Correo: jose.fernandez@correo.pe
+Contraseña: jose123
+
+
+Nombre: Ana Paredes
+Correo: ana.paredes@correo.pe
+Contraseña: ana123
+
+
+Nombre: Luis Cruz
+Correo: luis.cruz@correo.pe
+Contraseña: luis123
+
+
+Nombre: Paola Ortega
+Correo: paola.ortega@correo.pe
+Contraseña: paola123
+
+
+Nombre: Andrés Lozano
+Correo: andres.lozano@correo.pe
+Contraseña: andres123
+
+
+Nombre: Verónica Salas
+Correo: veronica.salas@correo.pe
+Contraseña: veronica123
+
+
+Nombre: Ricardo Peña
+Correo: ricardo.pena@correo.pe
+Contraseña: ricardo123
+
+
+Nombre: Sandra Cárdenas
+Correo: sandra.cardenas@correo.pe
+Contraseña: sandra123
+
+
+Nombre: Javier Gómez
+Correo: javier.gomez@correo.pe
+Contraseña: javier123
+
+
+Nombre: Carmen Ruiz
+Correo: carmen.ruiz@correo.pe
+Contraseña: carmen123
+
+
+Nombre: Marco Reyes
+Correo: marco.reyes@correo.pe
+Contraseña: marco123
+
+
+Nombre: Patricia Campos
+Correo: patricia.campos@correo.pe
+Contraseña: patricia123
+
+
+Nombre: Cristian Ibáñez
+Correo: cristian.ibanez@correo.pe
+Contraseña: cristian123
+
+
+Nombre: Karina Aguilar
+Correo: karina.aguilar@correo.pe
+Contraseña: karina123
+
+
+Nombre: Francisco Villanueva
+Correo: francisco.villanueva@correo.pe
+Contraseña: francisco123
+
+
+Nombre: Melissa Soto
+Correo: melissa.soto@correo.pe
+Contraseña: melissa123
+
+
+Nombre: Gustavo Mejía
+Correo: gustavo.mejia@correo.pe
+Contraseña: gustavo123
+
