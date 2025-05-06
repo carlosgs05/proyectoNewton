@@ -8,11 +8,12 @@ use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\ETLController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SimulacroController;
 
 
 
 Route::get('/generate-hash', function () {
-    return bcrypt('gustavo123'); // Generará un hash compatible con Laravel
+    return bcrypt('marina123'); // Generará un hash compatible con Laravel
 });
 
 
@@ -43,3 +44,7 @@ Route::prefix('etl')->group(function () {
 
 // Rutas de reportes
 Route::post('report/performance', [ReportController::class, 'performance']);
+
+
+// Ruta para procesar simulacro de un estudiante
+Route::post('simulacro_estudiante/registrar', [SimulacroController::class, 'registrarSimulacroEstudiante']);
