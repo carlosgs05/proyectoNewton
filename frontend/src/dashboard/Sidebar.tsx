@@ -1,19 +1,16 @@
 // SidebarAdmin.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  FaBoxOpen, 
-  FaTachometerAlt, 
-  FaUser, 
-  FaLock, 
+import React, { useState, useRef, useEffect } from "react";
+import {
+  FaTachometerAlt,
+  FaUser,
+  FaLock,
   FaTools,
-  FaThList,
-  FaTags,
   FaStar,
   FaHome,
   FaChevronDown,
-  FaChevronRight
-} from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+  FaChevronRight,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -27,13 +24,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setReviewsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleBlur = (e: React.FocusEvent) => {
@@ -46,18 +46,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
     <aside
       className={`
         fixed inset-y-0 left-0 w-64 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700
-        transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        transform ${isOpen ? "translate-x-0" : "-translate-x-full"}
         md:translate-x-0 transition-transform duration-300 ease-in-out z-50
         flex flex-col shadow-2xl border-r border-gray-700
       `}
     >
       {/* Branding */}
       <div className="flex items-center px-6 py-5 border-b border-gray-700">
-          <img
-            className="object-cover w-14 h-14 rounded-full"
-            src="/assets/logo.png"
-            alt="Logo"
-          />
+        <img
+          className="object-cover w-14 h-14 rounded-full"
+          src="/assets/logo.png"
+          alt="Logo"
+        />
         <h1 className="text-2xl font-bold text-cyan-500 ml-3">NEWTON</h1>
         <button
           className="ml-auto md:hidden text-2xl text-gray-400 hover:text-cyan-500"
@@ -77,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
             <span className="text-[14px]">PRINCIPAL</span>
           </div>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate("/dashboard")}
             className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
           >
             <FaTachometerAlt className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
             <span className="text-[14px]">PRIVACIDAD</span>
           </div>
           <button
-            onClick={() => navigate('/admin/perfil')}
+            onClick={() => navigate("/admin/perfil")}
             className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
           >
             <FaUser className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
@@ -107,30 +107,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
             <span className="text-[14px]">MANTENEDOR</span>
           </div>
           <div className="space-y-1">
-            <button
-              onClick={() => navigate('/admin/categorias')}
-              className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-            >
-              <FaThList className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-              Categorías
-            </button>
-            <button
-              onClick={() => navigate('/admin/marcas')}
-              className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-            >
-              <FaTags className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-              Marcas
-            </button>
-            <button
-              onClick={() => navigate('/admin/productos')}
-              className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-            >
-              <FaBoxOpen className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-              Productos
-            </button>
-            
-            {/* Dropdown de Reseñas */}
-            <div 
+            {/* Dropdown de Reportes */}
+            <div
               ref={dropdownRef}
               onBlur={handleBlur}
               tabIndex={-1}
@@ -150,22 +128,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
                   <FaChevronRight className="w-3 h-3 text-cyan-400" />
                 )}
               </button>
-              
+
               {reviewsOpen && (
                 <div className="ml-6 space-y-1 mt-1">
                   <button
-                    onClick={() => navigate('/dashboard/historialPuntajes')}
+                    onClick={() => navigate("/dashboard/historialPuntajes")}
                     className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
                   >
                     <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
                     Historial de Puntajes
                   </button>
                   <button
-                    onClick={() => navigate('')}
+                    onClick={() => navigate("")}
                     className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
                   >
                     <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
                     Datos de Simulacros
+                  </button>
+                  <button
+                    onClick={() => navigate("/dashboard/dificultadCursos")}
+                    className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
+                  >
+                    <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
+                    Dificultad de Cursos
+                  </button>
+                  <button
+                    onClick={() => navigate("/dashboard/vistasTipoMaterial")}
+                    className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
+                  >
+                    <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
+                    Vistas por Tipo de Material
                   </button>
                 </div>
               )}

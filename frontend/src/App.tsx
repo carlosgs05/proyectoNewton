@@ -7,6 +7,8 @@ import Login from './autenticacion/Login';
 import Layout from '../src/dashboard/Layout';
 import Home from './dashboard/pages/Home';
 import HistorialSimulacro from './dashboard/pages/reportes/HistorialSimulacro';
+import DificultadCursos from './dashboard/pages/reportes/DificultadCursos';
+import VisualizacionTipoMaterial from './dashboard/pages/reportes/VisualizacionTipoMaterial';
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route path="/dashboard/*" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path='historialPuntajes' element={<HistorialSimulacro />} />
+            <Route path='dificultadCursos' element={<DificultadCursos />} />
+            <Route path='vistasTipoMaterial' element={<VisualizacionTipoMaterial />} />
           </Route>
         </Route>
       </Routes>
