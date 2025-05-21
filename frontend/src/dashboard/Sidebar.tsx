@@ -1,16 +1,19 @@
-// SidebarAdmin.tsx
 import React, { useState, useRef, useEffect } from "react";
 import {
-  FaTachometerAlt,
   FaUser,
   FaLock,
-  FaTools,
   FaStar,
   FaHome,
   FaChevronDown,
   FaChevronRight,
+  FaHistory,
+  FaBalanceScale,
+  FaCube,
+  FaThLarge,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { FaBars, FaBook } from "react-icons/fa6";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,6 +22,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
   const navigate = useNavigate();
+  const { hasPermission, hasRole } = useAuth();
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
     }
   };
 
+  const buttonBaseClasses =
+    "w-full flex items-center px-3 py-2.5 rounded-lg text-sm text-cyan-100 hover:bg-cyan-600 hover:text-white transition-all cursor-pointer";
+
   return (
     <aside
       className={`
@@ -60,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
         />
         <h1 className="text-2xl font-bold text-cyan-500 ml-3">NEWTON</h1>
         <button
-          className="ml-auto md:hidden text-2xl text-gray-400 hover:text-cyan-500"
+          className="ml-auto md:hidden text-2xl text-gray-400 hover:text-cyan-500 focus:outline-none cursor-pointer"
           onClick={toggle}
           aria-label="Cerrar sidebar"
         >
@@ -73,16 +80,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
         {/* Sección Principal */}
         <div>
           <div className="flex items-center px-3 py-3 text-cyan-400 text-sm font-semibold tracking-wider border-b border-gray-700 mb-2">
-            <FaHome className="w-4 h-4 mr-3" />
+            <FaThLarge className="w-4 h-4 mr-3" />
             <span className="text-[14px]">PRINCIPAL</span>
           </div>
           <button
             onClick={() => navigate("/dashboard")}
-            className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
+            className={`${buttonBaseClasses}`}
           >
-            <FaTachometerAlt className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-            Dashboard
+            <FaHome className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+            Home
           </button>
+          {hasPermission(5) && (
+            <button
+              onClick={() => navigate("/dashboard/usuarios")}
+              className={`${buttonBaseClasses} mt-1`}
+            >
+              <FaUser className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+              Usuarios
+            </button>
+          )}
         </div>
 
         {/* Sección Privacidad */}
@@ -92,8 +108,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
             <span className="text-[14px]">PRIVACIDAD</span>
           </div>
           <button
-            onClick={() => navigate("/admin/perfil")}
-            className="w-full flex items-center px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
+            onClick={() => navigate("/dashboard/perfil")}
+            className={`${buttonBaseClasses}`}
           >
             <FaUser className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
             Mi Perfil
@@ -103,11 +119,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
         {/* Sección Mantenedor */}
         <div>
           <div className="flex items-center px-3 py-3 text-cyan-400 text-sm font-semibold tracking-wider border-b border-gray-700 mb-2">
-            <FaTools className="w-4 h-4 mr-3" />
-            <span className="text-[14px]">MANTENEDOR</span>
+            <FaBars className="w-4 h-4 mr-3" />
+            <span className="text-[14px]">MENÚ</span>
           </div>
           <div className="space-y-1">
-            {/* Dropdown de Reportes */}
             <div
               ref={dropdownRef}
               onBlur={handleBlur}
@@ -115,8 +130,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
               className="relative"
             >
               <button
+                onClick={() => navigate("/dashboard/contenido")}
+                className={`${buttonBaseClasses}`}
+              >
+                <FaBook className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                {hasRole(1)
+                  ? "Contenido Educativo"
+                  : hasRole(2)
+                  ? "Cursos Disponibles"
+                  : "Contenido Educativo"}
+              </button>
+              <button
                 onClick={() => setReviewsOpen(!reviewsOpen)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
+                className={`${buttonBaseClasses} justify-between`}
               >
                 <div className="flex items-center">
                   <FaStar className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
@@ -130,35 +156,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
               </button>
 
               {reviewsOpen && (
-                <div className="ml-6 space-y-1 mt-1">
-                  <button
-                    onClick={() => navigate("/dashboard/historialPuntajes")}
-                    className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-                  >
-                    <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
-                    Historial de Puntajes
-                  </button>
-                  <button
-                    onClick={() => navigate("")}
-                    className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-                  >
-                    <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
-                    Datos de Simulacros
-                  </button>
-                  <button
-                    onClick={() => navigate("/dashboard/dificultadCursos")}
-                    className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-                  >
-                    <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
-                    Dificultad de Cursos
-                  </button>
-                  <button
-                    onClick={() => navigate("/dashboard/vistasTipoMaterial")}
-                    className="w-full flex items-center px-3 py-2 rounded-lg hover:bg-gray-800/60 transition-all text-cyan-100 text-sm"
-                  >
-                    <span className="w-4 h-4 mr-3 min-w-[16px]"></span>
-                    Vistas por Tipo de Material
-                  </button>
+                <div className="w-full space-y-1 mt-1 pl-6">
+                  {hasPermission(3) && (
+                    <button
+                      onClick={() => navigate("/dashboard/historialPuntajes")}
+                      className={`${buttonBaseClasses}`}
+                    >
+                      <FaHistory className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                      Historial de Puntajes
+                    </button>
+                  )}
+
+                  {hasPermission(6) && (
+                    <>
+                      <button
+                        onClick={() => navigate("/dashboard/dificultadCursos")}
+                        className={`${buttonBaseClasses}`}
+                      >
+                        <FaBalanceScale className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                        Dificultad de Cursos
+                      </button>
+                      <button
+                        onClick={() => navigate("/dashboard/consumoMaterial")}
+                        className={`${buttonBaseClasses}`}
+                      >
+                        <FaCube className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                        Consumo de Material
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

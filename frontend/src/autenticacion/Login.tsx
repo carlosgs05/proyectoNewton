@@ -1,35 +1,50 @@
-import React, { useState, FormEvent, ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, FormEvent, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 
+// Interfaces for the login payload and response
 interface LoginData {
   correo: string;
   password: string;
+}
+
+interface Permission {
+  idpermiso: number;
+  nombre: string;
+}
+
+interface Role {
+  idrol: number;
+  nombre: string;
+  permisos: Permission[];
+}
+
+interface UserPayload {
+  idusuario: number;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  celular: string;
+  codigomatricula: string | null;
+  idrol: number;
+  created_at: string;
+  updated_at: string;
+  rol: Role;
 }
 
 interface LoginResponse {
   success: boolean;
   access_token: string;
   token_type: string;
-  user: {
-    idusuario: number;
-    nombre: string;
-    apellido?: string;
-    correo: string;
-    rol: {
-      idrol: number;
-      nombre: string;
-    };
-  };
-  rol: {
-    idrol: number;
-    nombre: string;
-  };
+  user: UserPayload;
 }
 
 const Login: React.FC = () => {
-  const [formData, setFormData] = useState<LoginData>({ correo: '', password: '' });
+  const [formData, setFormData] = useState<LoginData>({
+    correo: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
@@ -37,10 +52,10 @@ const Login: React.FC = () => {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       setRememberMe(checked);
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -50,7 +65,7 @@ const Login: React.FC = () => {
 
     try {
       const { data } = await axios.post<LoginResponse>(
-        'http://localhost:8000/api/login',
+        "http://localhost:8000/api/login",
         {
           correo: formData.correo,
           password: formData.password,
@@ -58,35 +73,41 @@ const Login: React.FC = () => {
       );
 
       if (data.success) {
-        const { access_token, user, rol } = data;
+        const { access_token, user } = data;
 
+        // Map backend user payload to front-end User type
         const userData = {
           iduser: user.idusuario,
           nombre: user.nombre,
-          apellido: user.apellido || '',
+          apellido: user.apellido,
           correo: user.correo,
+          celular: user.celular,
+          codigomatricula: user.codigomatricula,
           rol: {
-            idrol: rol.idrol,
-            nombre: rol.nombre,
+            idrol: user.rol.idrol,
+            nombre: user.rol.nombre,
+            permisos: user.rol.permisos,
           },
         };
 
+        // Update auth context and storage
         login(userData, access_token);
-
         const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem('authToken', access_token);
-        storage.setItem('userData', JSON.stringify(userData));
+        storage.setItem("authToken", access_token);
+        storage.setItem("userData", JSON.stringify(userData));
 
-        // Configurar Axios para usar el token en futuras solicitudes
-        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        // Configure Axios defaults
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
 
-        navigate('/dashboard', { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     } catch (err: any) {
-      console.error('Error en login:', err);
-      let msg = 'Error al iniciar sesión';
+      console.error("Error en login:", err);
+      let msg = "Error al iniciar sesión";
       if (err.response?.status === 401) {
-        msg = 'Credenciales incorrectas';
+        msg = "Credenciales incorrectas";
       } else if (err.response?.data?.message) {
         msg = err.response.data.message;
       } else if (err.message) {
@@ -119,8 +140,12 @@ const Login: React.FC = () => {
               </svg>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-cyan-500 mb-2">INICIAR SESIÓN</h1>
-          <p className="text-gray-400">Ingresa tus credenciales para continuar</p>
+          <h1 className="text-3xl font-bold text-cyan-500 mb-2">
+            INICIAR SESIÓN
+          </h1>
+          <p className="text-gray-400">
+            Ingresa tus credenciales para continuar
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -157,17 +182,11 @@ const Login: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={handleChange}
-                className="h-4 w-4 text-cyan-600 border-gray-600 rounded bg-gray-700"
-              />
-              <span className="text-gray-300 text-sm">Recordar sesión</span>
-            </label>
-            <a href="/forgot-password" className="text-sm text-cyan-400 hover:text-cyan-300">
+          <div className="flex items-center justify-end mb-4">
+            <a
+              href="/forgot-password"
+              className="text-sm text-cyan-400 hover:text-cyan-300"
+            >
               ¿Olvidaste tu contraseña?
             </a>
           </div>
@@ -175,7 +194,7 @@ const Login: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-white font-bold rounded-lg transition-all duration-300 disabled:opacity-75 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-white font-bold rounded-lg transition-all duration-300 disabled:opacity-75 disabled:cursor-not-allowed enabled:cursor-pointer"
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -199,10 +218,10 @@ const Login: React.FC = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Procesando...
+                Ingresando al sistema
               </div>
             ) : (
-              'ACCEDER AL SISTEMA'
+              "ACCEDER AL SISTEMA"
             )}
           </button>
         </form>

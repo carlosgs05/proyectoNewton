@@ -11,7 +11,7 @@ class UsuarioController extends Controller
     public function getUsuarios()
     {
         try {
-            $usuarios = Usuario::with('rol')->get();
+            $usuarios = Usuario::with(['rol.permisos'])->get();
             return response()->json([
                 'success' => true,
                 'data' => $usuarios
@@ -73,15 +73,18 @@ class UsuarioController extends Controller
 
     public function login(Request $request)
     {
+        // Validar inputs
         $request->validate([
-            'correo' => 'required|email',
+            'correo'   => 'required|email',
             'password' => 'required|string'
         ]);
 
+        // Intentar obtener el usuario por correo, con su rol y los permisos de ese rol
         $usuario = Usuario::where('correo', $request->correo)
-                    ->with('rol')
-                    ->first();
+            ->with(['rol.permisos'])  // carga rol y permisos relacionados
+            ->first();
 
+        // Verificar si existe usuario y contraseña
         if (!$usuario || !Hash::check($request->password, $usuario->contrasena)) {
             return response()->json([
                 'success' => false,
@@ -89,14 +92,18 @@ class UsuarioController extends Controller
             ], 401);
         }
 
+        // Crear token de autenticación
         $token = $usuario->createToken('auth_token')->plainTextToken;
 
+        // Extraer permisos en un arreglo simple (opcional: nombres o toda la colección)
+        $permisos = $usuario->rol->permisos->pluck('nombre');  // por ejemplo solo los nombres
+
+        // Responder con usuario, rol, permisos y token
         return response()->json([
-            'success' => true,
+            'success'      => true,
             'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $usuario,
-            'rol' => $usuario->rol
+            'token_type'   => 'Bearer',
+            'user'         => $usuario,
         ]);
     }
 

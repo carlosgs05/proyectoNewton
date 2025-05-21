@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
+    // Obtener el rendimiento del usuario en los simulacros
     public function performance(Request $request)
     {
         try {
@@ -57,7 +58,6 @@ class ReportController extends Controller
                 'message' => 'Datos obtenidos correctamente',
                 'data' => $formattedData
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error en ReportController: ' . $e->getMessage());
             return response()->json([
@@ -66,5 +66,96 @@ class ReportController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    // Obtener el tiempo promedio de uso de los materiales en minutos
+    public function reportesMaterial()
+    {
+        try {
+            // Promedio de tiempo de uso en MINUTOS con decimales (1 decimal)
+            $tiempoUso = DB::connection('datamart_newton')
+                ->table('hecho_consumo_material as hcm')
+                ->join('dim_material as m', 'hcm.keymaterial', '=', 'm.keymaterial')
+                ->select(
+                    'm.tipomaterial as name',
+                    // ROUND(AVG(segundos) / 60.0, 1) AS valor
+                    DB::raw('ROUND(AVG(hcm.tiempototalseg) / 60.0, 1) as valor')  // Promedio en minutos :contentReference[oaicite:0]{index=0}
+                )
+                ->groupBy('m.tipomaterial')
+                ->orderBy('valor', 'desc')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'name'  => $this->mapMaterialName($item->name),
+                        'valor' => (float) $item->valor  // Ya viene con 1 decimal
+                    ];
+                });
+
+            // Promedio de frecuencia de uso (numero de veces consumido)
+            $frecuenciaUso = DB::connection('datamart_newton')
+                ->table('hecho_consumo_material as hcm')
+                ->join('dim_material as m', 'hcm.keymaterial', '=', 'm.keymaterial')
+                ->select(
+                    'm.tipomaterial as name',
+                    // ROUND(AVG(vecesconsumido), 1) AS valor
+                    DB::raw('ROUND(AVG(hcm.vecesconsumido), 1) as valor')  // Promedio de veces consumidas :contentReference[oaicite:1]{index=1}
+                )
+                ->groupBy('m.tipomaterial')
+                ->orderBy('valor', 'desc')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'name'  => $this->mapMaterialName($item->name),
+                        'valor' => round((float) $item->valor, 1)  // Se asegura 1 decimal
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Datos obtenidos correctamente',
+                'data'    => [
+                    'tiempo_uso'     => $this->ensureAllMaterials($tiempoUso),
+                    'frecuencia_uso' => $this->ensureAllMaterials($frecuenciaUso),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en ReporteMaterialController: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function mapMaterialName($tipoMaterial)
+    {
+        // Mapear nombres según requerimientos
+        return match ($tipoMaterial) {
+            'flashcard'    => 'Flashcards',
+            'pdf'          => 'PDF',
+            'video'        => 'Video',
+            'solucionario' => 'Solucionario',
+            default        => $tipoMaterial,
+        };
+    }
+
+    private function ensureAllMaterials($collection)
+    {
+        // Asegurar que todos los materiales estén presentes incluso con 0
+        $defaults = [
+            ['name' => 'Flashcards',   'valor' => 0],
+            ['name' => 'PDF',          'valor' => 0],
+            ['name' => 'Video',        'valor' => 0],
+            ['name' => 'Solucionario', 'valor' => 0],
+        ];
+
+        return collect($defaults)
+            ->map(function ($default) use ($collection) {
+                $found = $collection->firstWhere('name', $default['name']);
+                return $found ?: $default;
+            })
+            ->sortByDesc('valor')
+            ->values();
     }
 }

@@ -1,11 +1,10 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\RolController;
-use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\CursoController;
 use App\Http\Controllers\ETLController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulacroController;
@@ -34,6 +33,10 @@ Route::post('/roles/crear', [RolController::class, 'createRol']);
 Route::get('/usuarios/listar', [UsuarioController::class, 'getUsuarios']);
 Route::post('/usuarios/crear', [UsuarioController::class, 'createUsuario']);
 
+
+// Rutas cursos
+Route::get('/cursos/listar', [CursoController::class, 'getAllCursos']);
+
 // Rutas ETL
 Route::prefix('etl')->group(function () {
     Route::post('/full', [ETLController::class, 'runFullETL']);
@@ -44,6 +47,8 @@ Route::prefix('etl')->group(function () {
 
 // Rutas de reportes
 Route::post('report/performance', [ReportController::class, 'performance']);
+Route::get('/report/consumoMaterial', [ReportController::class, 'reportesMaterial']);
+
 
 
 // Ruta para procesar simulacro de un estudiante

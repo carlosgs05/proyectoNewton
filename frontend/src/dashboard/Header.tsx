@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
         </div>
         <button 
           onClick={logout} 
-          className="p-2 rounded-full hover:bg-gray-700/40 transition-colors"
+          className="p-2 rounded-full hover:bg-gray-700/40 transition-colors cursor-pointer"
           aria-label="Cerrar sesión"
         >
           <FaSignOutAlt className="w-5 h-5 text-cyan-400 hover:text-cyan-300" />
