@@ -108,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
             <span className="text-[14px]">PRIVACIDAD</span>
           </div>
           <button
-            onClick={() => navigate("/dashboard/perfil")}
+            onClick={() => navigate("/dashboard/mi-perfil")}
             className={`${buttonBaseClasses}`}
           >
             <FaUser className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />

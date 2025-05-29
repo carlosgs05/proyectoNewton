@@ -1,15 +1,23 @@
-// src/components/contenidos/Contenidos.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
-import { FaBook, FaPlus, FaChevronLeft, FaChevronRight, FaStream } from "react-icons/fa";
-import { FiX } from "react-icons/fi";
+import {
+  FaPlus,
+  FaChevronLeft,
+  FaChevronRight,
+  FaStream,
+  FaEdit,
+  FaTrash,
+  FaSpinner,
+  FaBook,
+} from "react-icons/fa";
+import Swal from "sweetalert2/dist/sweetalert2.all.js";
 import { useNavigate } from "react-router-dom";
 
 interface Material {
   idmaterial: number;
   idtema: number;
-  tipomaterial: string; // "PDF", "Flashcards", "Video", "Solucionario", etc.
+  tipomaterial: string;
   url: string;
   created_at: string;
 }
@@ -38,12 +46,17 @@ const Contenidos: React.FC = () => {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [page, setPage] = useState(1);
 
-  // Estados para el modal (solo uso en modo administrador)
   const [modalOpen, setModalOpen] = useState(false);
-  const [currentTemas, setCurrentTemas] = useState<Tema[]>([]);
-  const [currentCursoName, setCurrentCursoName] = useState<string>("");
+  const [editingCurso, setEditingCurso] = useState<Curso | null>(null);
+  const [formCurso, setFormCurso] = useState({ nombrecurso: "" });
+  const [errors, setErrors] = useState<{ nombrecurso?: string[] }>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    fetchCursos();
+  }, []);
+
+  const fetchCursos = () => {
     axios
       .get("http://127.0.0.1:8000/api/cursos/listar")
       .then((res) => {
@@ -52,7 +65,7 @@ const Contenidos: React.FC = () => {
         }
       })
       .catch((err) => console.error(err));
-  }, []);
+  };
 
   const totalPages = Math.ceil(cursos.length / ITEMS_PER_PAGE);
   const paginated = cursos.slice(
@@ -60,16 +73,78 @@ const Contenidos: React.FC = () => {
     page * ITEMS_PER_PAGE
   );
 
-  const openTemasModal = (curso: Curso) => {
-    setCurrentTemas(curso.temas);
-    setCurrentCursoName(curso.nombrecurso);
+  const openModal = (curso?: Curso) => {
+    setEditingCurso(curso || null);
+    setFormCurso({ nombrecurso: curso?.nombrecurso || "" });
+    setErrors({});
     setModalOpen(true);
   };
-  const closeModal = () => setModalOpen(false);
 
-  // ================================================
-  // VISTA PARA ESTUDIANTE (permiso 4)
-  // ================================================
+  const closeModal = () => {
+    setModalOpen(false);
+    setFormCurso({ nombrecurso: "" });
+    setEditingCurso(null);
+    setErrors({});
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormCurso({ ...formCurso, [e.target.name]: e.target.value });
+    setErrors({});
+  };
+
+  const handleSave = () => {
+    setSaving(true);
+    const request = editingCurso
+      ? axios.put(
+          `http://127.0.0.1:8000/api/cursos/${editingCurso.idcurso}/actualizar`,
+          formCurso
+        )
+      : axios.post("http://127.0.0.1:8000/api/cursos/registrar", formCurso);
+
+    request
+      .then((res) => {
+        if (res.data.success) {
+          Swal.fire("Éxito", res.data.message, "success");
+          fetchCursos();
+          closeModal();
+        }
+      })
+      .catch((error) => {
+        if (error.response?.status === 422) {
+          setErrors(error.response.data.errors);
+        } else {
+          Swal.fire("Error", "No se pudo guardar el curso", "error");
+        }
+      })
+      .finally(() => setSaving(false));
+  };
+
+  const handleDelete = (curso: Curso) => {
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción eliminará el curso y todos sus temas y materiales.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, eliminar",
+    }).then((result: any) => {
+      if (result.isConfirmed) {
+        axios
+          .delete(`http://127.0.0.1:8000/api/cursos/${curso.idcurso}/eliminar`)
+          .then((res) => {
+            if (res.data.success) {
+              Swal.fire("Eliminado", res.data.message, "success");
+              fetchCursos();
+            }
+          })
+          .catch(() =>
+            Swal.fire("Error", "No se pudo eliminar el curso", "error")
+          );
+      }
+    });
+  };
+
   if (hasPermission(4)) {
     return (
       <div className="mx-4 md:mx-8 lg:mx-16 mt-4">
@@ -106,9 +181,6 @@ const Contenidos: React.FC = () => {
     );
   }
 
-  // ================================================
-  // VISTA PARA ADMINISTRADOR DE CONTENIDO (permiso 7)
-  // ================================================
   if (hasPermission(7)) {
     return (
       <div className="mx-4 md:mx-8 lg:mx-16 mt-4">
@@ -118,11 +190,10 @@ const Contenidos: React.FC = () => {
 
         <div className="flex justify-end mb-6">
           <button
-            onClick={() => (window.location.href = "/dashboard/cursos/nuevo")}
-            className="flex items-center px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg shadow-md transition-all cursor-pointer"
+            onClick={() => openModal()}
+            className="flex items-center px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg shadow-md cursor-pointer"
           >
-            <FaPlus className="mr-2 text-sm" />
-            Registrar Curso
+            <FaPlus className="mr-2 text-sm" /> Registrar Curso
           </button>
         </div>
 
@@ -139,26 +210,44 @@ const Contenidos: React.FC = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase">
                   Temas
                 </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {paginated.map((curso, idx) => (
-                <tr
-                  key={curso.idcurso}
-                  className="hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
+                <tr key={curso.idcurso} className="hover:bg-gray-100">
+                  <td className="px-6 py-4 text-sm text-gray-700">
                     {(page - 1) * ITEMS_PER_PAGE + idx + 1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                  <td className="px-6 py-4 text-sm text-gray-800">
                     {curso.nombrecurso}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                  <td className="px-6 py-4 text-sm text-cyan-700">
                     <button
-                      onClick={() => openTemasModal(curso)}
-                      className="flex items-center text-cyan-700 hover:text-cyan-900 transition-colors cursor-pointer"
+                      onClick={() =>
+                        navigate(`/dashboard/cursos/${curso.idcurso}/temas`, {
+                          state: { curso },
+                        })
+                      }
+                      className="flex items-center hover:text-cyan-900 cursor-pointer"
                     >
-                      <FaStream className="mr-1" /> Temas
+                      <FaStream className="mr-1" /> Ver Temas
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-800 space-x-4">
+                    <button
+                      onClick={() => openModal(curso)}
+                      className="text-yellow-600 hover:text-yellow-800 cursor-pointer"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(curso)}
+                      className="text-red-600 hover:text-red-800 cursor-pointer"
+                    >
+                      <FaTrash />
                     </button>
                   </td>
                 </tr>
@@ -166,7 +255,7 @@ const Contenidos: React.FC = () => {
               {paginated.length === 0 && (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="px-6 py-8 text-center text-sm text-gray-500 italic"
                   >
                     No hay cursos registrados
@@ -185,7 +274,7 @@ const Contenidos: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page === 1}
-              className="p-2.5 bg-white border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer"
             >
               <FaChevronLeft className="w-4 h-4" />
             </button>
@@ -195,62 +284,56 @@ const Contenidos: React.FC = () => {
             <button
               onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
               disabled={page === totalPages}
-              className="p-2.5 bg-white border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer"
             >
               <FaChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Modal de Temas (solo para admin) */}
         {modalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
-              {/* Encabezado del Modal */}
-              <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+            <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden">
+              <div className="p-6 border-b border-gray-200 bg-gray-50">
                 <h3 className="text-xl font-bold text-gray-800">
-                  Temas de “{currentCursoName}”
+                  {editingCurso ? "Editar Curso" : "Registrar Curso"}
                 </h3>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-500 hover:text-cyan-600 transition-colors cursor-pointer"
-                >
-                  <FiX size={24} />
-                </button>
               </div>
-              {/* Cuerpo del Modal: Tabla de Temas */}
-              <div className="p-4 max-h-80 overflow-y-auto">
-                {currentTemas.length > 0 ? (
-                  <table className="min-w-full bg-white divide-y divide-gray-200 border border-gray-200 table-auto">
-                    <thead className="bg-gray-600">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-white uppercase">
-                          #
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-white uppercase">
-                          Tema
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {currentTemas.map((tema, idx) => (
-                        <tr
-                          key={tema.idtema}
-                          className="hover:bg-gray-100 transition-colors"
-                        >
-                          <td className="px-4 py-2 text-sm text-gray-700">
-                            {idx + 1}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {tema.nombretema}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-gray-500 italic">No hay temas.</p>
+              <div className="p-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre del Curso
+                </label>
+                <input
+                  type="text"
+                  name="nombrecurso"
+                  value={formCurso.nombrecurso}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.nombrecurso ? "border-red-500" : "border-gray-300"
+                  } bg-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-700`}
+                />
+                {errors.nombrecurso && (
+                  <span className="text-red-600 text-sm mt-1 block">
+                    {errors.nombrecurso[0]}
+                  </span>
                 )}
+
+                <div className="flex justify-center mt-6 space-x-4">
+                  <button
+                    onClick={closeModal}
+                    className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-6 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {saving && <FaSpinner className="animate-spin" />}{" "}
+                    {saving ? "Guardando..." : "Guardar"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -259,15 +342,7 @@ const Contenidos: React.FC = () => {
     );
   }
 
-  // ================================================
-  // SI EL USUARIO NO TIENE PERMISO 4 NI 7
-  // ================================================
-  return (
-    <div className="mx-4 md:mx-8 lg:mx-16 mt-4 text-center text-gray-600">
-      No tienes permisos para ver este contenido.
-    </div>
-  );
+  return null;
 };
 
 export default Contenidos;
-

@@ -1,17 +1,20 @@
-import { Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import GuestRoute from './components/GuestRoute';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import GuestRoute from "./components/GuestRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-import Login from './autenticacion/Login';
-import Layout from '../src/dashboard/Layout';
-import Home from './dashboard/pages/Home';
-import Usuarios from './dashboard/pages/Usuarios';
-import DificultadCursos from './dashboard/pages/reportes/DificultadCursos';
-import ConsumoMaterial from './dashboard/pages/reportes/ConsumoMaterial';
-import HistorialSimulacro from './dashboard/pages/reportes/HistorialSimulacro';
-import Contenidos from './dashboard/pages/Contenidos';
-import CursoDetalle from './dashboard/pages/CursoDetalle';
+import Login from "./autenticacion/Login";
+import Layout from "../src/dashboard/Layout";
+import Home from "./dashboard/pages/Home";
+import Usuarios from "./dashboard/pages/Usuarios";
+import DificultadCursos from "./dashboard/pages/reportes/DificultadCursos";
+import ConsumoMaterial from "./dashboard/pages/reportes/ConsumoMaterial";
+import HistorialSimulacro from "./dashboard/pages/reportes/HistorialSimulacro";
+import Contenidos from "./dashboard/pages/Contenidos";
+import CursoDetalle from "./dashboard/pages/CursoDetalle";
+import MiPerfil from "./dashboard/pages/MiPerfil";
+import TemasAdmin from "./dashboard/pages/TemasAdmin";
+import MaterialesAdmin from "./dashboard/pages/MaterialesAdmin";
 
 function App() {
   return (
@@ -26,13 +29,16 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard/*" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path='usuarios' element={<Usuarios />} />
-            <Route path='contenido' element={<Contenidos />} />
+            <Route path="mi-perfil" element={<MiPerfil />} />
+            <Route path="usuarios" element={<Usuarios />} />
+            <Route path="contenido" element={<Contenidos />} />
+            <Route path="cursos/:idcurso/temas" element={<TemasAdmin />} />
+            <Route path="cursos/:idcurso/temas/:idtema/materiales" element={<MaterialesAdmin />} />
             <Route path="cursos/:idcurso" element={<CursoDetalle />} />
-            <Route path='historialPuntajes' element={<HistorialSimulacro />} />
+            <Route path="historialPuntajes" element={<HistorialSimulacro />} />
             {/* Rutas protegidas para los reportes */}
-            <Route path='dificultadCursos' element={<DificultadCursos />} />
-            <Route path='consumoMaterial' element={<ConsumoMaterial />} />
+            <Route path="dificultadCursos" element={<DificultadCursos />} />
+            <Route path="consumoMaterial" element={<ConsumoMaterial />} />
           </Route>
         </Route>
       </Routes>

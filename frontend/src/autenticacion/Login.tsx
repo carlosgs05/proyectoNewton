@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
-// Interfaces for the login payload and response
 interface LoginData {
   correo: string;
   password: string;
@@ -26,18 +25,22 @@ interface UserPayload {
   apellido: string;
   correo: string;
   celular: string;
+  dni: string;
   codigomatricula: string | null;
   idrol: number;
   created_at: string;
   updated_at: string;
+  activo: boolean;
   rol: Role;
 }
 
 interface LoginResponse {
   success: boolean;
-  access_token: string;
-  token_type: string;
-  user: UserPayload;
+  primer_ingreso?: boolean;
+  message?: string;
+  access_token?: string;
+  user?: UserPayload;
+  user_id?: number; // Added user_id property
 }
 
 const Login: React.FC = () => {
@@ -66,23 +69,22 @@ const Login: React.FC = () => {
     try {
       const { data } = await axios.post<LoginResponse>(
         "http://localhost:8000/api/login",
-        {
-          correo: formData.correo,
-          password: formData.password,
-        }
+        formData
       );
 
-      if (data.success) {
-        const { access_token, user } = data;
+      if (data.success && data.access_token && data.user) {
+        const user = data.user;
+        const access_token = data.access_token;
 
-        // Map backend user payload to front-end User type
         const userData = {
-          iduser: user.idusuario,
+          idusuario: user.idusuario,
           nombre: user.nombre,
           apellido: user.apellido,
           correo: user.correo,
           celular: user.celular,
+          dni: user.dni,
           codigomatricula: user.codigomatricula,
+          activo: user.activo,
           rol: {
             idrol: user.rol.idrol,
             nombre: user.rol.nombre,
@@ -90,21 +92,16 @@ const Login: React.FC = () => {
           },
         };
 
-        // Update auth context and storage
-        login(userData, access_token);
         const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem("authToken", access_token);
         storage.setItem("userData", JSON.stringify(userData));
 
-        // Configure Axios defaults
-        axios.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${access_token}`;
-
-        navigate("/dashboard", { replace: true });
+        axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+        login(userData, access_token);
+      } else if (data.primer_ingreso && data.user_id) {
+        navigate(`/cambiar-password?id=${data.user_id}`, { replace: true });
       }
     } catch (err: any) {
-      console.error("Error en login:", err);
       let msg = "Error al iniciar sesión";
       if (err.response?.status === 401) {
         msg = "Credenciales incorrectas";
@@ -140,12 +137,8 @@ const Login: React.FC = () => {
               </svg>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-cyan-500 mb-2">
-            INICIAR SESIÓN
-          </h1>
-          <p className="text-gray-400">
-            Ingresa tus credenciales para continuar
-          </p>
+          <h1 className="text-3xl font-bold text-cyan-500 mb-2">INICIAR SESIÓN</h1>
+          <p className="text-gray-400">Ingresa tus credenciales para continuar</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -183,10 +176,7 @@ const Login: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-end mb-4">
-            <a
-              href="/forgot-password"
-              className="text-sm text-cyan-400 hover:text-cyan-300"
-            >
+            <a href="/forgot-password" className="text-sm text-cyan-400 hover:text-cyan-300">
               ¿Olvidaste tu contraseña?
             </a>
           </div>
@@ -204,14 +194,7 @@ const Login: React.FC = () => {
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path
                     className="opacity-75"
                     fill="currentColor"

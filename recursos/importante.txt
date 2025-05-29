@@ -1,0 +1,4 @@
+generar el nuevo componente MaterialesAdmin.tsx siguiendo la misma lógica visual y técnica. pero ahora ten en cuenta tambien estas indicaciones:
+
+como hay 4 tipos de materiales (Flashcards, PDF, Video, Solucionario) entonces utiliza tabs de 4 pestañas y haz que los registros de la tabla aparescan filtrados por cada pestaña. el modal de registrar o editar material los campos se adapten a cada tipo de material:
+-si es Flashcards que muestre 

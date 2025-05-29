@@ -26,16 +26,36 @@ Route::get('/roles/listar', [RolController::class, 'getRoles']);
 Route::post('/roles/crear', [RolController::class, 'createRol']);
 
 
-// Rutas permisos
-
+// Ruta contraseña de seguridad del sistema
+Route::get('/security-system-password', function () {
+    return response()->json([
+        'password' => env('SECURITY_WORK_PASSWORD')
+    ]);
+});
 
 // Rutas usuarios
 Route::get('/usuarios/listar', [UsuarioController::class, 'getUsuarios']);
 Route::post('/usuarios/crear', [UsuarioController::class, 'createUsuario']);
+Route::put('/usuarios/{id}/personal-info', [UsuarioController::class, 'updatePersonalInfo']);
+Route::put('/usuarios/{id}/password', [UsuarioController::class, 'updatePassword']);
 
 
-// Rutas cursos
+// CURSOS
 Route::get('/cursos/listar', [CursoController::class, 'getAllCursos']);
+Route::post('/cursos/registrar', [CursoController::class, 'storeCurso']);
+Route::put('/cursos/{id}/actualizar', [CursoController::class, 'updateCurso']);
+Route::delete('/cursos/{id}/eliminar', [CursoController::class, 'deleteCurso']);
+
+// TEMAS
+Route::post('/cursos/{idCurso}/temas/registrar', [CursoController::class, 'storeTema']);
+Route::put('/temas/{id}/actualizar', [CursoController::class, 'updateTema']);
+Route::delete('/temas/{id}/eliminar', [CursoController::class, 'deleteTema']);
+
+// MATERIALES
+Route::get('/temas/{idTema}/materiales/listar', [CursoController::class, 'getMaterialesByTema']);
+Route::post('/temas/{idTema}/materiales/registrar', [CursoController::class, 'storeMaterial']);
+Route::post('/materiales/{id}/actualizar', [CursoController::class, 'updateMaterial']);
+Route::delete('/materiales/{id}/eliminar', [CursoController::class, 'deleteMaterial']);
 
 // Rutas ETL
 Route::prefix('etl')->group(function () {

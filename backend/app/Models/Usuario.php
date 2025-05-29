@@ -23,6 +23,8 @@ class Usuario extends Model
         'celular',
         'codigomatricula',
         'idrol',
+        'passwordenc',
+        'activo',
         'created_at',
         'updated_at'
     ];

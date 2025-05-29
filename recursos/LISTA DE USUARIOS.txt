@@ -1,8 +1,8 @@
 ADMINISTRADOR:
 
-Nombre: Carlos Mendoza
+Nombre: Carlos Gutiérrez Sandoval
 Correo: admin@correo.pe
-Contraseña: admin123
+Contraseña: carlosSystemOwner2025!
 
 
 

@@ -15,8 +15,8 @@ import {
   FaChartLine,
   FaBalanceScale,
   FaRegClock,
-  FaTimes,
 } from "react-icons/fa";
+import { FiX } from "react-icons/fi";
 
 type MaterialTime = {
   name: string;
@@ -216,7 +216,7 @@ const ConsumoMaterial: React.FC = () => {
                   onClick={() => setShowRecommendations(false)}
                   className="text-gray-500 hover:text-cyan-600 transition-colors cursor-pointer"
                 >
-                  <FaTimes className="w-6 h-6" />
+                  <FiX size={24} />
                 </button>
               </div>
 

@@ -16,6 +16,7 @@ class MaterialTema extends Model
     protected $fillable = [
         'idtema',
         'tipomaterial',
+        'nombrematerial',
         'url',
         'created_at',
     ];
