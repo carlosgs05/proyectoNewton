@@ -7,6 +7,7 @@ import {
   FaBook,
   FaClipboardList,
   FaBookOpen,
+  FaClipboardCheck,
 } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import { FaLightbulb } from "react-icons/fa6";
@@ -18,12 +19,12 @@ const Home: React.FC = () => {
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<
-    "difficulty" | "consumption" | ""
+    "historial" | "consumption" | ""
   >("");
 
   // Estilos comunes
   const sectionTitleClasses =
-    "text-2xl font-bold mb-5 text-cyan-700 text-center uppercase";
+    "text-2xl font-extrabold mb-5 text-cyan-700 text-center uppercase";
   const cardClasses =
     "bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer";
   const gridClasses = "grid gap-6 md:grid-cols-2 lg:grid-cols-3";
@@ -40,7 +41,7 @@ const Home: React.FC = () => {
   const handleViewReport = () => {
     if (!selectedReport) return;
     const routeMap = {
-      difficulty: "/dashboard/dificultadCursos",
+      historial: "/dashboard/rendimientoSimulacros",
       consumption: "/dashboard/consumoMaterial",
     } as const;
     navigate(routeMap[selectedReport]);
@@ -76,6 +77,18 @@ const Home: React.FC = () => {
               <p className="text-gray-600">
                 Controla los materiales educativos, cursos disponibles y
                 contenido académico.
+              </p>
+            </Link>
+
+                        {/* Nuevo Card: Gestión de Simulacros para Admin */}
+            <Link to="/dashboard/simulacros" className={cardClasses}>
+              <h3 className="font-bold mb-2 text-gray-700 flex items-center">
+                <FaClipboardCheck className="mr-2 text-cyan-500" /> Gestión de
+                Simulacros
+              </h3>
+              <p className="text-gray-600">
+                Administra la creación, asignación y calificación de simulacros
+                para estudiantes.
               </p>
             </Link>
 
@@ -116,8 +129,8 @@ const Home: React.FC = () => {
 
             <Link to="/dashboard/recomendaciones" className={cardClasses}>
               <h3 className="font-bold mb-2 text-gray-700 flex items-center">
-                <FaLightbulb className="mr-2 text-cyan-500" /> Contenido Recomendado 
-
+                <FaLightbulb className="mr-2 text-cyan-500" /> Contenido
+                Recomendado
               </h3>
               <p className="text-gray-600">
                 Basado en tu rendimiento, se te sugiere contenido adicional para
@@ -125,9 +138,9 @@ const Home: React.FC = () => {
               </p>
             </Link>
 
-            <Link to="/dashboard/historialPuntajes" className={cardClasses}>
+            <Link to="/dashboard/rendimientoSimulacros" className={cardClasses}>
               <h3 className="font-bold mb-2 text-gray-700 flex items-center">
-                <FaClipboardList className="mr-2 text-cyan-500" /> Historial de
+                <FaClipboardList className="mr-2 text-cyan-500" /> Rendimiento en
                 Simulacros
               </h3>
               <p className="text-gray-600">
@@ -158,7 +171,7 @@ const Home: React.FC = () => {
             <div className="space-y-4 mb-6">
               <label
                 className={`flex items-center p-4 border rounded-lg cursor-pointer transition ${
-                  selectedReport === "difficulty"
+                  selectedReport === "historial"
                     ? "border-cyan-500 bg-cyan-50"
                     : "border-gray-200 hover:border-cyan-300"
                 }`}
@@ -166,13 +179,13 @@ const Home: React.FC = () => {
                 <input
                   type="radio"
                   name="report"
-                  value="difficulty"
-                  checked={selectedReport === "difficulty"}
-                  onChange={() => setSelectedReport("difficulty")}
+                  value="historial"
+                  checked={selectedReport === "historial"}
+                  onChange={() => setSelectedReport("historial")}
                   className="form-radio h-5 w-5 text-cyan-500"
                 />
                 <span className="ml-3 font-medium text-gray-700">
-                  Dificultad de cursos
+                  Rendimiento en simulacros
                 </span>
               </label>
 

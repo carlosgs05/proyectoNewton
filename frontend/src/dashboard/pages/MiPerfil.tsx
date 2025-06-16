@@ -144,7 +144,7 @@ const MiPerfil: React.FC = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 mt-4">
       <div className="flex flex-col items-center">
-        <h1 className="text-2xl font-bold mb-5 text-cyan-700 text-center uppercase">
+        <h1 className="text-2xl font-extrabold mb-5 text-cyan-700 text-center uppercase">
           Mi Perfil
         </h1>
         <p className="text-gray-600 mt-2 max-w-6xl text-base text-center">

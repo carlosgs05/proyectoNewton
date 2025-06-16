@@ -2,18 +2,18 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   FaUser,
   FaLock,
-  FaStar,
   FaHome,
   FaChevronDown,
   FaChevronRight,
   FaHistory,
-  FaBalanceScale,
   FaCube,
   FaThLarge,
+  FaRegChartBar, // Nuevo icono para Reportes
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FaBars, FaBook } from "react-icons/fa6";
+import { PiExam } from "react-icons/pi";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -140,12 +140,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
                   ? "Cursos Disponibles"
                   : "Contenido Educativo"}
               </button>
+              {hasPermission(1) && (
+                <>
+                  <button
+                    onClick={() => navigate("/dashboard/simulacros")}
+                    className={`${buttonBaseClasses}`}
+                  >
+                    <PiExam className="w-5 h-5 mr-3 min-w-[16px] text-cyan-400" />
+                    Simulacros
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => setReviewsOpen(!reviewsOpen)}
                 className={`${buttonBaseClasses} justify-between`}
               >
                 <div className="flex items-center">
-                  <FaStar className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                  <FaRegChartBar className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
                   Reportes
                 </div>
                 {reviewsOpen ? (
@@ -156,26 +167,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
               </button>
 
               {reviewsOpen && (
-                <div className="w-full space-y-1 mt-1 pl-6">
-                  {hasPermission(3) && (
-                    <button
-                      onClick={() => navigate("/dashboard/historialPuntajes")}
-                      className={`${buttonBaseClasses}`}
-                    >
-                      <FaHistory className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-                      Historial de Puntajes
-                    </button>
-                  )}
+                <div className="w-full space-y-1 mt-1 border-l-2 border-cyan-500">
+                  <button
+                    onClick={() => navigate("/dashboard/rendimientoSimulacros")}
+                    className={`${buttonBaseClasses}`}
+                  >
+                    <FaHistory className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                    Rendimiento en Simulacros
+                  </button>
 
                   {hasPermission(6) && (
                     <>
-                      <button
-                        onClick={() => navigate("/dashboard/dificultadCursos")}
-                        className={`${buttonBaseClasses}`}
-                      >
-                        <FaBalanceScale className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-                        Dificultad de Cursos
-                      </button>
                       <button
                         onClick={() => navigate("/dashboard/consumoMaterial")}
                         className={`${buttonBaseClasses}`}

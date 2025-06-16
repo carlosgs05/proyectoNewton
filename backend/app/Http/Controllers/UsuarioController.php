@@ -38,6 +38,25 @@ class UsuarioController extends Controller
         }
     }
 
+    public function getOnlyEstudiantes()
+    {
+        try {
+            $estudiantes = Usuario::where('idrol', 2)
+                ->with(['rol.permisos'])
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $estudiantes
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estudiantes'
+            ], 500);
+        }
+    }
+
     public function createUsuario(Request $request)
     {
         try {

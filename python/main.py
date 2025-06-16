@@ -1,0 +1,12 @@
+from fastapi import FastAPI
+from obtener_respuestas_admin import router as router_respuestas_correctas_simulacro
+from orden_cursos_simulacros import router as router_orden_cursos
+from obtener_respuestas_estudiantes import router as router_respuestas_estudiantes
+from analizador_temas_errados import router as router_analizador_temas_errados
+
+app = FastAPI()
+
+app.include_router(router_respuestas_correctas_simulacro)
+app.include_router(router_orden_cursos)
+app.include_router(router_respuestas_estudiantes)
+app.include_router(router_analizador_temas_errados)

@@ -1,0 +1,71 @@
+{
+    "success": true,
+    "message": "Cursos obtenidos correctamente",
+    "data": [
+        {
+            "idcurso": 1,
+            "nombrecurso": "Desarrollo Personal",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 2,
+            "nombrecurso": "Ciudadanía y Cívica",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 3,
+            "nombrecurso": "Historia",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 4,
+            "nombrecurso": "Geografía",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 5,
+            "nombrecurso": "Economía",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 6,
+            "nombrecurso": "Literatura",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 7,
+            "nombrecurso": "Análisis del Discurso",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 8,
+            "nombrecurso": "Comunicología",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 9,
+            "nombrecurso": "Inglés",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 10,
+            "nombrecurso": "Matemática",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 11,
+            "nombrecurso": "Biología",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 12,
+            "nombrecurso": "Química",
+            "created_at": "2025-04-26 12:51:01.630262"
+        },
+        {
+            "idcurso": 13,
+            "nombrecurso": "Física",
+            "created_at": "2025-04-26 12:51:01.630262"
+        }
+    ]
+}

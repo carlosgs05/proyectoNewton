@@ -4,21 +4,47 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
     // Obtener el rendimiento del usuario en los simulacros
-    public function performance(Request $request)
+    public function reporteSimulacrosPuntaje(Request $request)
     {
         try {
             // Validar el request
             $validated = $request->validate([
-                'idusuario' => 'required|integer'  // Cambiado a minúsculas
+                'idusuario' => 'required|integer',
+                'anio' => 'required|integer',
+                'mes' => 'required|string' // Mes en texto, por ejemplo: "Junio"
             ]);
 
-            // Obtener el keyusuario desde dim_usuario
+            // Convertir nombre del mes a número
+            $meses = [
+                'Enero' => 1,
+                'Febrero' => 2,
+                'Marzo' => 3,
+                'Abril' => 4,
+                'Mayo' => 5,
+                'Junio' => 6,
+                'Julio' => 7,
+                'Agosto' => 8,
+                'Septiembre' => 9,
+                'Octubre' => 10,
+                'Noviembre' => 11,
+                'Diciembre' => 12,
+            ];
+            $mesNumero = $meses[$validated['mes']] ?? null;
+
+            if (!$mesNumero) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mes inválido',
+                    'data' => []
+                ], 422);
+            }
+
+            // Obtener keyusuario desde dim_usuario
             $keyUsuario = DB::connection('datamart_newton')
                 ->table('dim_usuario')
                 ->where('idusuario', $validated['idusuario'])
@@ -32,11 +58,13 @@ class ReportController extends Controller
                 ], 404);
             }
 
-            // Consulta principal
+            // Consulta principal con filtros de año y mes
             $rows = DB::connection('datamart_newton')
                 ->table('hecho_simulacro as hs')
                 ->join('dim_tiempo as t', 'hs.keytiempo', '=', 't.keytiempo')
                 ->where('hs.keyusuario', $keyUsuario)
+                ->whereYear('t.idfecha', $validated['anio'])
+                ->whereMonth('t.idfecha', $mesNumero)
                 ->select(
                     't.idfecha',
                     DB::raw('SUM(hs.puntajetotal) as puntaje')
@@ -59,7 +87,7 @@ class ReportController extends Controller
                 'data' => $formattedData
             ]);
         } catch (\Exception $e) {
-            Log::error('Error en ReportController: ' . $e->getMessage());
+            Log::error('Error en ReportController (performance): ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor',
@@ -72,7 +100,7 @@ class ReportController extends Controller
     public function reportesMaterial()
     {
         try {
-            // Promedio de tiempo de uso en MINUTOS con decimales (1 decimal)
+            // Promedio de tiempo de uso en MINUTOS con decimales (2 decimales)
             $tiempoUso = DB::connection('datamart_newton')
                 ->table('hecho_consumo_material as hcm')
                 ->join('dim_material as m', 'hcm.keymaterial', '=', 'm.keymaterial')
@@ -157,5 +185,116 @@ class ReportController extends Controller
             })
             ->sortByDesc('valor')
             ->values();
+    }
+
+
+    public function reporteSimulacroCursoDetalle(Request $request)
+    {
+        try {
+            // Validación
+            $validated = $request->validate([
+                'idusuario' => 'required|integer',
+                'anio' => 'required|integer',
+                'mes' => 'required|string', // Recibes nombre: "Junio"
+                'idcurso' => 'nullable|integer',
+            ]);
+
+            // Convertir nombre del mes a número
+            $meses = [
+                'Enero' => 1,
+                'Febrero' => 2,
+                'Marzo' => 3,
+                'Abril' => 4,
+                'Mayo' => 5,
+                'Junio' => 6,
+                'Julio' => 7,
+                'Agosto' => 8,
+                'Septiembre' => 9,
+                'Octubre' => 10,
+                'Noviembre' => 11,
+                'Diciembre' => 12,
+            ];
+            $mesNumero = $meses[$validated['mes']] ?? null;
+
+            if (!$mesNumero) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mes inválido',
+                    'data' => []
+                ], 422);
+            }
+
+            // Obtener keyUsuario
+            $keyUsuario = DB::connection('datamart_newton')
+                ->table('dim_usuario')
+                ->where('idusuario', $validated['idusuario'])
+                ->value('keyusuario');
+
+            if (!$keyUsuario) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no encontrado.',
+                    'data' => []
+                ], 404);
+            }
+
+            // Base de la consulta
+            $query = DB::connection('datamart_newton')
+                ->table('hecho_simulacro as hs')
+                ->join('dim_tiempo as t', 'hs.keytiempo', '=', 't.keytiempo')
+                ->where('hs.keyusuario', $keyUsuario)
+                ->whereYear('t.idfecha', $validated['anio'])
+                ->whereMonth('t.idfecha', $mesNumero);
+
+            // Si se envía idcurso, filtrar por ese curso
+            if (!empty($validated['idcurso'])) {
+                $keyCurso = DB::connection('datamart_newton')
+                    ->table('dim_curso')
+                    ->where('idcurso', $validated['idcurso'])
+                    ->value('keycurso');
+
+                if (!$keyCurso) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Curso no encontrado.',
+                        'data' => []
+                    ], 404);
+                }
+
+                $query->where('hs.keycurso', $keyCurso);
+            }
+
+            // Continuar con el resto de la consulta
+            $rows = $query->select(
+                't.idfecha',
+                DB::raw('SUM(hs.enblanco) as enblanco'),
+                DB::raw('SUM(hs.incorrectas) as incorrectas'),
+                DB::raw('SUM(hs.correctas) as correctas')
+            )
+                ->groupBy('t.idfecha')
+                ->orderBy('t.idfecha')
+                ->get();
+
+            // Formateo para el frontend
+            $formatted = $rows->map(fn($item) => [
+                'idfecha' => date('d/m/Y', strtotime($item->idfecha)),
+                'preguntasEnBlanco' => (int) $item->enblanco,
+                'preguntasIncorrectas' => (int) $item->incorrectas,
+                'preguntasCorrectas' => (int) $item->correctas,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Datos obtenidos correctamente.',
+                'data' => $formatted,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en reporteSimulacroCursoDetalle: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno del servidor.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

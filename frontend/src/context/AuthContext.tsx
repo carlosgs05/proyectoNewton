@@ -9,7 +9,7 @@ export interface Permission {
 export interface Role {
   idrol: number;
   nombre: string;
-  permisos?: Permission[]; // ahora opcional
+  permisos?: Permission[];
 }
 
 export interface User {

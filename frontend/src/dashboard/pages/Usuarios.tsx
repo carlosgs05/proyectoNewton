@@ -292,7 +292,7 @@ const Usuarios: React.FC = () => {
 
   return (
     <div className="mx-4 md:mx-8 lg:mx-16 mt-4">
-      <h1 className="text-2xl font-bold mb-4 text-cyan-700 text-center uppercase">
+      <h1 className="text-2xl font-extrabold mb-4 text-cyan-700 text-center uppercase">
         Gestión de Usuarios
       </h1>
       <div className="flex justify-end items-center gap-4">

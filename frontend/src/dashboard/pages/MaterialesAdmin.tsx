@@ -72,7 +72,7 @@ const MaterialesAdmin: React.FC = () => {
   const [errores, setErrores] = useState<Record<string, string[]>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Para el modal de vista previa
+  // Modal de Vista Previa (único modal)
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewURL, setPreviewURL] = useState<string>("");
   const [previewType, setPreviewType] = useState<
@@ -81,10 +81,10 @@ const MaterialesAdmin: React.FC = () => {
 
   useEffect(() => {
     fetchMateriales();
-    // limpiar URLs al desmontar
     return () => {
       if (previewFileURL) URL.revokeObjectURL(previewFileURL);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMateriales = () => {
@@ -124,7 +124,6 @@ const MaterialesAdmin: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setFormMaterial((prev) => ({ ...prev, [name]: value }));
-    // Al modificar, limpiar errores de ese campo
     setErrores((prev) => {
       const nuevos = { ...prev };
       delete nuevos[name];
@@ -141,7 +140,6 @@ const MaterialesAdmin: React.FC = () => {
         URL.revokeObjectURL(previewFileURL);
       }
       setPreviewFileURL(URL.createObjectURL(file));
-      // Limpiar error de archivo al asignar uno nuevo
       setErrores((prev) => {
         const nuevos = { ...prev };
         delete nuevos.archivo;
@@ -180,7 +178,6 @@ const MaterialesAdmin: React.FC = () => {
       tipomaterial: material.tipomaterial,
       url: material.url ?? "",
     });
-    // Si estamos editando, no pre-cargamos previewFileURL:
     setArchivo(null);
     setPreviewFileURL("");
     setErrores({});
@@ -222,7 +219,6 @@ const MaterialesAdmin: React.FC = () => {
         },
       });
       if (res.data.success) {
-        // Esperar un instante para que llegue a 100%
         setUploadProgress(100);
         setTimeout(() => {
           Swal.fire("Éxito", res.data.message, "success");
@@ -268,20 +264,11 @@ const MaterialesAdmin: React.FC = () => {
     }
   };
 
+  // Modal de Vista Previa: abre el modal y carga contenido según tipo archivo
   const openPreviewModal = (material: Material) => {
-    // Si es PDF o Solucionario, abrir en pestaña nueva
-    if (
-      material.tipomaterial === "PDF" ||
-      material.tipomaterial === "Solucionario"
-    ) {
-      const fullUrl = `http://127.0.0.1:8000/${material.url}`;
-      window.open(fullUrl, "_blank");
-    } else {
-      // Para Flashcards (imagen) o Video, abrir en modal
-      setPreviewURL(`http://127.0.0.1:8000/${material.url}`);
-      setPreviewType(material.tipomaterial);
-      setPreviewModalOpen(true);
-    }
+    setPreviewURL(`http://127.0.0.1:8000/${material.url}`);
+    setPreviewType(material.tipomaterial);
+    setPreviewModalOpen(true);
   };
 
   const closePreview = () => {
@@ -294,7 +281,7 @@ const MaterialesAdmin: React.FC = () => {
       {/* Breadcrumb */}
       <div className="flex items-center mb-4 space-x-2 text-sm text-cyan-700">
         <button
-          onClick={() => navigate("/dashboard/cursos")}
+          onClick={() => navigate("/dashboard/contenido")}
           className="hover:underline cursor-pointer"
         >
           Cursos
@@ -561,7 +548,6 @@ const MaterialesAdmin: React.FC = () => {
                             ...prev,
                             url: "",
                           }));
-                        // Limpiar error de archivo si existía
                         setErrores((prev) => {
                           const nuevos = { ...prev };
                           delete nuevos.archivo;
@@ -602,7 +588,6 @@ const MaterialesAdmin: React.FC = () => {
                         URL.revokeObjectURL(previewFileURL);
                       }
                       setPreviewFileURL(URL.createObjectURL(file));
-                      // Limpiar error de archivo
                       setErrores((prev) => {
                         const nuevos = { ...prev };
                         delete nuevos.archivo;
@@ -656,42 +641,84 @@ const MaterialesAdmin: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Vista Previa */}
+      {/* Modal de Vista Previa (adaptado) */}
       {previewModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl w-full max-w-3xl shadow-xl overflow-hidden">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          style={{ overflow: "hidden" }} // Evita scroll externo
+        >
+          <div
+            className="bg-white rounded-xl w-full max-w-6xl shadow-xl flex flex-col"
+            style={{
+              height: "80vh", // Más alto que antes pero sin scroll
+              maxHeight: "80vh",
+            }}
+          >
             <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
               <h3 className="text-xl font-bold text-gray-800">Vista Previa</h3>
               <button
                 onClick={closePreview}
                 className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                aria-label="Cerrar vista previa"
               >
                 <FaTimes />
               </button>
             </div>
-            <div className="p-6">
-              {previewType === "Flashcards" && (
+            <div
+              className="flex-grow flex justify-center items-center p-6"
+              style={{ minHeight: 0, overflow: "hidden" }}
+            >
+              {(previewType === "Flashcards" ||
+                (previewType === "Solucionario" &&
+                  previewURL.match(/\.(jpg|jpeg|png|gif|bmp|svg)$/i))) && (
                 <img
                   src={previewURL}
                   alt="Vista previa"
-                  className="w-full h-auto object-contain rounded-lg"
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                  style={{ maxHeight: "100%", maxWidth: "100%" }}
                 />
               )}
-              {previewType === "Video" && (
+              {(previewType === "Video" ||
+                (previewType === "Solucionario" &&
+                  previewURL.match(/\.(mp4|webm|ogg)$/i))) && (
                 <video
                   src={previewURL}
                   controls
-                  className="w-full h-auto rounded-lg"
+                  className="max-w-full max-h-full rounded-lg"
+                  style={{ maxHeight: "100%", maxWidth: "100%" }}
                 />
               )}
-            </div>
-            <div className="flex justify-center p-4 border-t border-gray-200 bg-gray-50">
-              <button
-                onClick={closePreview}
-                className="px-6 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg cursor-pointer"
-              >
-                Cerrar
-              </button>
+              {(previewType === "PDF" ||
+                (previewType === "Solucionario" &&
+                  previewURL.match(/\.pdf$/i))) && (
+                <iframe
+                  src={previewURL}
+                  title="Vista previa PDF"
+                  className="w-full h-full rounded-lg"
+                  style={{ border: "none" }}
+                />
+              )}
+              {/* Archivos no soportados */}
+              {!(
+                previewType === "Flashcards" ||
+                previewType === "Video" ||
+                previewType === "PDF" ||
+                previewType === "Solucionario"
+              ) && (
+                <div className="p-4 text-center">
+                  <p className="mb-4 text-cyan-900 font-semibold">
+                    Vista previa no disponible para este tipo de archivo.
+                  </p>
+                  <a
+                    href={previewURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-cyan-700 text-white rounded hover:bg-cyan-900 transition"
+                  >
+                    Abrir archivo en nueva pestaña
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

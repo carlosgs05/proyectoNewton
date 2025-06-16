@@ -15,8 +15,28 @@ class CursoController extends Controller
 
     //-------------------------------------METODOS PARA CURSOS-------------------------------------//
 
+public function obtenerDatosGeneralesCursos()
+    {
+        try {
+            // Eager loading de temas y materiales
+            $cursos = Curso::All();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cursos obtenidos correctamente',
+                'data'    => $cursos
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error en CursoController@index: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los cursos'
+            ], 500);
+        }
+    }   
+
     // Recupera todos los cursos con sus temas y materiales.
-    public function getAllCursos(): JsonResponse
+    public function ObtenerCursosYDetalles(): JsonResponse
     {
         try {
             // Eager loading de temas y materiales

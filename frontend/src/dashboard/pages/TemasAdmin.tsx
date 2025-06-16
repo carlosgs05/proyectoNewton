@@ -145,7 +145,7 @@ const TemasAdmin: React.FC = () => {
     <div className="mx-4 md:mx-8 lg:mx-16 mt-4">
       <div className="flex items-center mb-4 space-x-2 text-sm text-cyan-700">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/dashboard/contenido")}
           className="flex items-center hover:underline cursor-pointer"
         >
           <FaArrowLeft className="mr-1" /> Cursos

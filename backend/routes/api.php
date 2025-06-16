@@ -8,6 +8,7 @@ use App\Http\Controllers\CursoController;
 use App\Http\Controllers\ETLController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulacroController;
+use App\Http\Controllers\NotificacionController;
 
 
 
@@ -35,13 +36,15 @@ Route::get('/security-system-password', function () {
 
 // Rutas usuarios
 Route::get('/usuarios/listar', [UsuarioController::class, 'getUsuarios']);
+Route::get('/usuarios/estudiantes', [UsuarioController::class, 'getOnlyEstudiantes']);
 Route::post('/usuarios/crear', [UsuarioController::class, 'createUsuario']);
 Route::put('/usuarios/{id}/personal-info', [UsuarioController::class, 'updatePersonalInfo']);
 Route::put('/usuarios/{id}/password', [UsuarioController::class, 'updatePassword']);
 
 
 // CURSOS
-Route::get('/cursos/listar', [CursoController::class, 'getAllCursos']);
+Route::get('/cursos/listar', [CursoController::class, 'ObtenerCursosYDetalles']);
+Route::get('/cursos/datos-generales', [CursoController::class, 'obtenerDatosGeneralesCursos']);
 Route::post('/cursos/registrar', [CursoController::class, 'storeCurso']);
 Route::put('/cursos/{id}/actualizar', [CursoController::class, 'updateCurso']);
 Route::delete('/cursos/{id}/eliminar', [CursoController::class, 'deleteCurso']);
@@ -57,6 +60,20 @@ Route::post('/temas/{idTema}/materiales/registrar', [CursoController::class, 'st
 Route::post('/materiales/{id}/actualizar', [CursoController::class, 'updateMaterial']);
 Route::delete('/materiales/{id}/eliminar', [CursoController::class, 'deleteMaterial']);
 
+
+// Rutas de simulacros
+Route::get('/simulacros/listar', [SimulacroController::class, 'obtenerTodosLosSimulacros']);
+Route::get('/simulacros/realizados', [SimulacroController::class, 'obtenerSimulacrosRealizados']);
+Route::post('/simulacros/registrar', [SimulacroController::class, 'registrarSimulacroAdmin']);
+Route::get('/simulacros/{idsimulacro}/estudiantes', [SimulacroController::class, 'obtenerEstudiantesPorSimulacro']);
+Route::post('/registrar-simulacro-estudiante', [SimulacroController::class, 'registrarSimulacroEstudiante']);
+Route::get('/simulacro/estudiante/{idusuario}/{fecha}', [SimulacroController::class, 'obtenerDatosSimulacroEstudiantePorFecha']);
+
+// Rutas para notificaciones
+Route::get('/notificaciones/{idusuario}', [NotificacionController::class, 'listarNotificaciones']);
+Route::put('/notificaciones/{idnotificacion}/leer', [NotificacionController::class, 'marcarComoLeida']);
+
+
 // Rutas ETL
 Route::prefix('etl')->group(function () {
     Route::post('/full', [ETLController::class, 'runFullETL']);
@@ -66,9 +83,9 @@ Route::prefix('etl')->group(function () {
 });
 
 // Rutas de reportes
-Route::post('report/performance', [ReportController::class, 'performance']);
+Route::post('report/reporteSimulacrosPuntaje', [ReportController::class, 'reporteSimulacrosPuntaje']);
 Route::get('/report/consumoMaterial', [ReportController::class, 'reportesMaterial']);
-
+Route::post('/report/simulacroCursoDetalle', [ReportController::class, 'reporteSimulacroCursoDetalle']);
 
 
 // Ruta para procesar simulacro de un estudiante
