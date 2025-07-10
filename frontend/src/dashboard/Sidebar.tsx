@@ -14,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FaBars, FaBook } from "react-icons/fa6";
 import { PiExam } from "react-icons/pi";
+import { RiInputMethodLine } from "react-icons/ri";
+import { SiFirst } from "react-icons/si";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -22,7 +24,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
   const navigate = useNavigate();
-  const { hasPermission, hasRole } = useAuth();
+  const { hasPermission } = useAuth();
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -134,11 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
                 className={`${buttonBaseClasses}`}
               >
                 <FaBook className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-                {hasRole(1)
-                  ? "Contenido Educativo"
-                  : hasRole(2)
-                  ? "Cursos Disponibles"
-                  : "Contenido Educativo"}
+                  Biblioteca Digital
               </button>
               {hasPermission(1) && (
                 <>
@@ -151,13 +149,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
                   </button>
                 </>
               )}
+
+              {hasPermission(4) && (
+                <>
+                  <button
+                    onClick={() => navigate("/dashboard/material-exclusivo")}
+                    className={`${buttonBaseClasses}`}
+                   >
+                   <SiFirst  className="w-5 h-5 mr-3 min-w-[16px] text-cyan-400" />
+                    Materiales Recomendados
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/dashboard/metodoEstudio")}
+                    className={`${buttonBaseClasses}`}
+                  >
+                    <RiInputMethodLine className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
+                    Método de Estudio
+                  </button>
+                </>
+              )}
+
               <button
                 onClick={() => setReviewsOpen(!reviewsOpen)}
                 className={`${buttonBaseClasses} justify-between`}
               >
                 <div className="flex items-center">
                   <FaRegChartBar className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-                  Reportes
+                  Rendimiento
                 </div>
                 {reviewsOpen ? (
                   <FaChevronDown className="w-3 h-3 text-cyan-400" />
@@ -173,9 +192,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggle }) => {
                     className={`${buttonBaseClasses}`}
                   >
                     <FaHistory className="w-4 h-4 mr-3 min-w-[16px] text-cyan-400" />
-                    Rendimiento en Simulacros
+                    Simulacros
                   </button>
-
                   {hasPermission(6) && (
                     <>
                       <button

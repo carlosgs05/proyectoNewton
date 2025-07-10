@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notificacion;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class NotificacionController extends Controller

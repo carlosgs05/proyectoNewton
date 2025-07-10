@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   FaPlus,
-  FaEye,
-  FaEdit,
-  FaTrash,
   FaChevronLeft,
   FaChevronRight,
   FaSpinner,
   FaTimes,
 } from "react-icons/fa";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { IoGridOutline } from "react-icons/io5";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2/dist/sweetalert2.all.js";
 import axios from "axios";
+import Select from "react-select";
 
 interface Curso {
   idcurso: number;
@@ -30,6 +30,7 @@ interface Material {
   nombrematerial: string;
   tipomaterial: "Flashcards" | "PDF" | "Video" | "Solucionario";
   url: string;
+  exclusivo: boolean;
   created_at: string;
 }
 
@@ -41,6 +42,12 @@ const tiposMaterial: Material["tipomaterial"][] = [
   "Solucionario",
 ];
 
+// Opciones para el selector de exclusividad
+const exclusivoOptions = [
+  { value: "general", label: "Acceso general" },
+  { value: "exclusive", label: "Exclusivo" },
+];
+
 const MaterialesAdmin: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,6 +56,9 @@ const MaterialesAdmin: React.FC = () => {
   const [materiales, setMateriales] = useState<Material[]>([]);
   const [activeTab, setActiveTab] =
     useState<Material["tipomaterial"]>("Flashcards");
+  const [exclusivoFilter, setExclusivoFilter] = useState<
+    "general" | "exclusive"
+  >("general");
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -61,10 +71,12 @@ const MaterialesAdmin: React.FC = () => {
     nombrematerial: string;
     tipomaterial: Material["tipomaterial"];
     url: string;
+    exclusivo: boolean;
   }>({
     nombrematerial: "",
     tipomaterial: "Flashcards",
     url: "",
+    exclusivo: false,
   });
 
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -72,7 +84,7 @@ const MaterialesAdmin: React.FC = () => {
   const [errores, setErrores] = useState<Record<string, string[]>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Modal de Vista Previa (único modal)
+  // Modal de Vista Previa
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewURL, setPreviewURL] = useState<string>("");
   const [previewType, setPreviewType] = useState<
@@ -88,8 +100,13 @@ const MaterialesAdmin: React.FC = () => {
   }, []);
 
   const fetchMateriales = () => {
+    const endpoint = `http://127.0.0.1:8000/api/temas/${tema.idtema}/materiales/listar`;
+
+    // Agregar el log para ver el endpoint
+    console.log("Endpoint de la solicitud:", endpoint);
+
     axios
-      .get(`http://127.0.0.1:8000/api/temas/${tema.idtema}/materiales/listar`)
+      .get(endpoint)
       .then((res: any) => {
         if (res.data.success) {
           setMateriales(res.data.data);
@@ -100,7 +117,14 @@ const MaterialesAdmin: React.FC = () => {
       );
   };
 
-  const filtered = materiales.filter((m) => m.tipomaterial === activeTab);
+  // Filtrar por tipo y exclusividad
+  const filtered = materiales
+    .filter((m) => m.tipomaterial === activeTab)
+    .filter((m) => {
+      if (exclusivoFilter === "exclusive") return m.exclusivo;
+      return !m.exclusivo; // "general" por defecto
+    });
+
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -129,6 +153,29 @@ const MaterialesAdmin: React.FC = () => {
       delete nuevos[name];
       return nuevos;
     });
+  };
+
+  // Restablecer la página a 1 cuando cambie el tipo de material o exclusividad
+  const handleTabChange = (tipo: Material["tipomaterial"]) => {
+    setActiveTab(tipo);
+    setFormMaterial((prev) => ({
+      ...prev,
+      tipomaterial: tipo,
+    }));
+    setPage(1); // Resetear a la primera página
+  };
+
+  const handleExclusivoChange = (option: any) => {
+    setExclusivoFilter(option.value);
+    setPage(1); // Resetear a la primera página
+  };
+
+  // Toggle para exclusivo
+  const toggleExclusivo = () => {
+    setFormMaterial((prev) => ({
+      ...prev,
+      exclusivo: !prev.exclusivo,
+    }));
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -163,6 +210,7 @@ const MaterialesAdmin: React.FC = () => {
       nombrematerial: "",
       tipomaterial: activeTab,
       url: "",
+      exclusivo: false,
     });
     setArchivo(null);
     if (previewFileURL) {
@@ -177,6 +225,7 @@ const MaterialesAdmin: React.FC = () => {
       nombrematerial: material.nombrematerial ?? "",
       tipomaterial: material.tipomaterial,
       url: material.url ?? "",
+      exclusivo: material.exclusivo,
     });
     setArchivo(null);
     setPreviewFileURL("");
@@ -202,6 +251,7 @@ const MaterialesAdmin: React.FC = () => {
     const formData = new FormData();
     formData.append("nombrematerial", formMaterial.nombrematerial);
     formData.append("tipomaterial", formMaterial.tipomaterial);
+    formData.append("exclusivo", formMaterial.exclusivo ? "1" : "0");
     if (archivo) formData.append("archivo", archivo);
 
     const endpoint = isEditing
@@ -264,7 +314,7 @@ const MaterialesAdmin: React.FC = () => {
     }
   };
 
-  // Modal de Vista Previa: abre el modal y carga contenido según tipo archivo
+  // Modal de Vista Previa
   const openPreviewModal = (material: Material) => {
     setPreviewURL(`http://127.0.0.1:8000/${material.url}`);
     setPreviewType(material.tipomaterial);
@@ -274,6 +324,34 @@ const MaterialesAdmin: React.FC = () => {
   const closePreview = () => {
     setPreviewModalOpen(false);
     setPreviewURL("");
+  };
+
+  // Estilos personalizados para react-select
+  const customStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      border: "1px solid #d1d5db",
+      borderRadius: "0.5rem",
+      boxShadow: "none",
+      "&:hover": {
+        borderColor: "#0891b2",
+      },
+      minHeight: "42px",
+      cursor: "pointer",
+    }),
+    option: (provided: any, state: any) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? "#0891b2" : "white",
+      color: state.isSelected ? "white" : "#374151",
+      "&:hover": {
+        backgroundColor: "#e0f2fe",
+      },
+      cursor: "pointer",
+    }),
+    singleValue: (provided: any) => ({
+      ...provided,
+      color: "#374151",
+    }),
   };
 
   return (
@@ -306,21 +384,15 @@ const MaterialesAdmin: React.FC = () => {
         Materiales del Tema: {tema.nombretema}
       </h1>
 
-      {/* Tabs y Registrar */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2">
+      {/* Filtros y Registrar */}
+      <div className="flex flex-col justify-between mb-6 gap-4">
+        {/* Selector de tipo de material */}
+        <div className="flex gap-2 flex-wrap">
           {tiposMaterial.map((tipo) => (
             <button
               key={tipo}
-              onClick={() => {
-                setActiveTab(tipo);
-                setFormMaterial((prev) => ({
-                  ...prev,
-                  tipomaterial: tipo,
-                }));
-                setPage(1);
-              }}
-              className={`px-4 py-2 rounded-full font-medium text-sm transition-all cursor-pointer ${
+              onClick={() => handleTabChange(tipo)}
+              className={`px-4 py-2 rounded-full font-medium text-base transition-all cursor-pointer ${
                 activeTab === tipo
                   ? "bg-cyan-700 text-white"
                   : "text-gray-700 hover:bg-cyan-600 hover:text-white"
@@ -330,26 +402,44 @@ const MaterialesAdmin: React.FC = () => {
             </button>
           ))}
         </div>
-        <button
-          onClick={() => {
-            setFormMaterial({
-              nombrematerial: "",
-              tipomaterial: activeTab,
-              url: "",
-            });
-            setArchivo(null);
-            setPreviewFileURL("");
-            setErrores({});
-            setIsEditing(false);
-            setHasSubmitted(false);
-            setSaving(false);
-            setUploadProgress(null);
-            setModalOpen(true);
-          }}
-          className="flex items-center px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg shadow-md cursor-pointer"
-        >
-          <FaPlus className="mr-2 text-sm" /> Registrar Material
-        </button>
+
+        <div className="flex flex-col md:flex-row justify-between gap- mt-2">
+          {/* Selector de exclusividad con react-select */}
+          <div className="w-full md:w-64">
+            <Select
+              options={exclusivoOptions}
+              value={exclusivoOptions.find(
+                (opt) => opt.value === exclusivoFilter
+              )}
+              onChange={handleExclusivoChange}
+              styles={customStyles}
+              isSearchable={false}
+              placeholder="Filtrar por..."
+            />
+          </div>
+
+          <button
+            onClick={() => {
+              setFormMaterial({
+                nombrematerial: "",
+                tipomaterial: activeTab,
+                url: "",
+                exclusivo: false,
+              });
+              setArchivo(null);
+              setPreviewFileURL("");
+              setErrores({});
+              setIsEditing(false);
+              setHasSubmitted(false);
+              setSaving(false);
+              setUploadProgress(null);
+              setModalOpen(true);
+            }}
+            className="flex items-center justify-center px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg shadow-md cursor-pointer transition-colors"
+          >
+            <FaPlus className="mr-2 text-sm" /> Registrar Material
+          </button>
+        </div>
       </div>
 
       {/* Tabla */}
@@ -364,7 +454,10 @@ const MaterialesAdmin: React.FC = () => {
                 Nombre
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase">
-                Vista
+                Acceso
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase">
+                Material
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase">
                 Acciones
@@ -373,44 +466,64 @@ const MaterialesAdmin: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {paginated.map((mat, idx) => (
-              <tr key={mat.idmaterial} className="hover:bg-gray-100">
+              <tr
+                key={mat.idmaterial}
+                className="hover:bg-gray-50 transition-colors"
+              >
                 <td className="px-6 py-4 text-sm text-gray-700">
                   {(page - 1) * ITEMS_PER_PAGE + idx + 1}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {mat.nombrematerial}
                 </td>
-                <td className="px-6 py-4 text-sm text-cyan-700">
+                <td className="px-6 py-4 text-sm">
+                  <div
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
+                      mat.exclusivo
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
+                    {mat.exclusivo ? "Exclusivo" : "General"}
+                  </div>
+                </td>
+                <td className="flex px-6 py-4 text-sm text-cyan-700">
                   <button
                     onClick={() => openPreviewModal(mat)}
-                    className="flex items-center hover:text-cyan-900 cursor-pointer"
+                    className="p-2 rounded-full bg-cyan-50 text-cyan-600 hover:bg-cyan-100 transition-colors duration-200 cursor-pointer"
+                    title="Vista previa"
                   >
-                    <FaEye />
+                    <IoGridOutline className="w-4 h-4" />
                   </button>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800 space-x-4">
-                  <button
-                    onClick={() => openEditModal(mat)}
-                    className="text-yellow-600 hover:text-yellow-800 cursor-pointer"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(mat.idmaterial)}
-                    className="text-red-600 hover:text-red-800 cursor-pointer"
-                  >
-                    <FaTrash />
-                  </button>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => openEditModal(mat)}
+                      className="p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors duration-200 cursor-pointer"
+                      title="Editar"
+                    >
+                      <FiEdit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(mat.idmaterial)}
+                      className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition-colors duration-200 cursor-pointer"
+                      title="Eliminar"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
             {paginated.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-6 py-8 text-center text-sm text-gray-500 italic"
                 >
-                  No hay materiales de tipo {activeTab}
+                  No hay materiales de tipo {activeTab} con el filtro
+                  seleccionado
                 </td>
               </tr>
             )}
@@ -419,7 +532,7 @@ const MaterialesAdmin: React.FC = () => {
       </div>
 
       {/* Paginación */}
-      <div className="flex justify-between items-center mt-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mt-6 gap-4">
         <span className="text-sm text-gray-600">
           Mostrando {paginated.length} de {filtered.length} materiales
         </span>
@@ -427,7 +540,7 @@ const MaterialesAdmin: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
             disabled={page === 1}
-            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer"
+            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
           >
             <FaChevronLeft className="w-4 h-4" />
           </button>
@@ -437,7 +550,7 @@ const MaterialesAdmin: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
             disabled={page === totalPages}
-            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer"
+            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
           >
             <FaChevronRight className="w-4 h-4" />
           </button>
@@ -448,15 +561,26 @@ const MaterialesAdmin: React.FC = () => {
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-3xl shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-xl font-bold text-gray-800">
+            {/* Header cyan con botón X */}
+            <div className="p-4 border-b border-cyan-800 bg-cyan-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-white">
                 {isEditing ? "Editar Material" : "Registrar Material"}
               </h3>
+              <button
+                onClick={closeModal}
+                className="text-white hover:text-gray-200 cursor-pointer"
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 text-base">
+              {" "}
+              {/* Tamaño de fuente aumentado */}
               {/* Nombre del Material */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-base font-medium text-gray-700 mb-2">
+                  {" "}
+                  {/* Tamaño aumentado */}
                   Nombre del Material
                 </label>
                 <input
@@ -464,34 +588,57 @@ const MaterialesAdmin: React.FC = () => {
                   name="nombrematerial"
                   value={formMaterial.nombrematerial ?? ""}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-2 rounded-lg border ${
+                  className={`w-full px-4 py-3 rounded-lg border text-base ${
                     hasSubmitted && errores.nombrematerial
                       ? "border-red-500"
                       : "border-gray-300"
                   } bg-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-700`}
                 />
                 {hasSubmitted && errores.nombrematerial && (
-                  <span className="text-red-600 text-sm mt-1 block">
+                  <span className="text-red-600 text-base mt-1 block">
+                    {" "}
+                    {/* Tamaño aumentado */}
                     {errores.nombrematerial[0]}
                   </span>
                 )}
               </div>
-
+              {/* Toggle Exclusivo */}
+              <div className="flex items-center justify-between">
+                <label className="block text-base font-medium text-gray-700">
+                  {" "}
+                  {/* Tamaño aumentado */}
+                  Material Exclusivo
+                </label>
+                <div
+                  onClick={toggleExclusivo}
+                  className={`relative w-14 h-7 flex items-center rounded-full cursor-pointer transition-colors ${
+                    formMaterial.exclusivo ? "bg-cyan-700" : "bg-gray-300"
+                  }`}
+                >
+                  <div
+                    className={`absolute w-6 h-6 bg-white rounded-full shadow-md transform transition-transform ${
+                      formMaterial.exclusivo ? "translate-x-8" : "translate-x-1"
+                    }`}
+                  ></div>
+                </div>
+              </div>
               {/* Archivo */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-base font-medium text-gray-700 mb-2">
+                  {" "}
+                  {/* Tamaño aumentado */}
                   Archivo
                 </label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
-                  className={`mt-1 w-full flex items-center justify-center text-sm text-gray-500 cursor-pointer border-2 border-dashed rounded-lg ${
+                  className={`mt-1 w-full flex items-center justify-center text-base text-gray-500 cursor-pointer border-2 border-dashed rounded-lg ${
                     formMaterial.tipomaterial === "Flashcards"
-                      ? "aspect-square h-96"
+                      ? "aspect-square h-80" // Altura aumentada
                       : formMaterial.tipomaterial === "Video"
-                      ? "aspect-video h-80"
-                      : "h-16"
+                      ? "aspect-video h-80" // Altura aumentada
+                      : "h-20"
                   } ${
                     hasSubmitted && errores.archivo
                       ? "border-red-500"
@@ -503,7 +650,7 @@ const MaterialesAdmin: React.FC = () => {
                     formMaterial.tipomaterial === "Flashcards" ? (
                       <img
                         src={previewFileURL}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         alt="preview"
                       />
                     ) : formMaterial.tipomaterial === "Video" ? (
@@ -512,14 +659,21 @@ const MaterialesAdmin: React.FC = () => {
                         className="w-full h-full object-contain"
                         controls
                       />
+                    ) : formMaterial.tipomaterial === "PDF" ? (
+                      <iframe
+                        src={previewFileURL}
+                        className="w-full h-full rounded-lg"
+                        style={{ border: "none" }}
+                        title="Vista previa PDF"
+                      />
                     ) : (
-                      <span className="px-2">{archivo.name}</span>
+                      <span className="px-2 text-base">{archivo.name}</span>
                     )
                   ) : isEditing && formMaterial.url ? (
                     formMaterial.tipomaterial === "Flashcards" ? (
                       <img
                         src={`http://127.0.0.1:8000/${formMaterial.url}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         alt="actual"
                       />
                     ) : formMaterial.tipomaterial === "Video" ? (
@@ -528,13 +682,22 @@ const MaterialesAdmin: React.FC = () => {
                         className="w-full h-full object-contain"
                         controls
                       />
+                    ) : formMaterial.tipomaterial === "PDF" ? (
+                      <iframe
+                        src={`http://127.0.0.1:8000/${formMaterial.url}`}
+                        className="w-full h-full rounded-lg"
+                        style={{ border: "none" }}
+                        title="Vista previa PDF"
+                      />
                     ) : (
-                      <span className="px-2">
+                      <span className="px-2 text-base">
                         {formMaterial.url.split("/").pop()}
                       </span>
                     )
                   ) : (
-                    <span>Arrastra o haz clic para subir</span>
+                    <span className="text-base">
+                      Arrastra o haz clic para subir
+                    </span>
                   )}
 
                   {/* Ícono tacho para quitar */}
@@ -558,14 +721,16 @@ const MaterialesAdmin: React.FC = () => {
                           setPreviewFileURL("");
                         }
                       }}
-                      className="absolute top-2 right-2 text-red-600 cursor-pointer"
+                      className="absolute top-3 right-3 text-red-600 cursor-pointer text-lg" // Tamaño aumentado
                     >
-                      <FaTrash />
+                      <FiTrash2 />
                     </button>
                   )}
                 </div>
                 {hasSubmitted && errores.archivo && (
-                  <span className="text-red-600 text-sm mt-1 block">
+                  <span className="text-red-600 text-base mt-2 block">
+                    {" "}
+                    {/* Tamaño aumentado */}
                     {errores.archivo[0]}
                   </span>
                 )}
@@ -597,12 +762,13 @@ const MaterialesAdmin: React.FC = () => {
                   }}
                 />
               </div>
-
               {/* Botones */}
-              <div className="flex justify-center space-x-4 pt-4">
+              <div className="flex justify-center space-x-4 pt-6">
+                {" "}
+                {/* Espaciado aumentado */}
                 <button
                   onClick={closeModal}
-                  className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer"
+                  className="px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors text-base" // Tamaño aumentado
                   disabled={saving}
                 >
                   Cancelar
@@ -610,7 +776,7 @@ const MaterialesAdmin: React.FC = () => {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-6 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="px-8 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer transition-colors text-base" // Tamaño aumentado
                 >
                   {saving && <FaSpinner className="animate-spin" />}
                   {saving ? "Guardando..." : "Guardar"}
@@ -625,43 +791,54 @@ const MaterialesAdmin: React.FC = () => {
       {uploadProgress !== null && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg w-full max-w-md shadow-lg p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-800 text-center">
-              Subiendo Material...
-            </h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Subiendo Material...
+              </h2>
+              <button
+                onClick={() => setUploadProgress(null)}
+                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+                <FaTimes />
+              </button>
+            </div>
             <div className="w-full bg-gray-200 rounded-full overflow-hidden h-4">
               <div
                 className="bg-cyan-700 h-4 transition-width duration-200"
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-base text-gray-600">
+              {" "}
+              {/* Tamaño aumentado */}
               {uploadProgress}% completado
             </p>
           </div>
         </div>
       )}
 
-      {/* Modal de Vista Previa (adaptado) */}
+      {/* Modal de Vista Previa */}
       {previewModalOpen && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          style={{ overflow: "hidden" }} // Evita scroll externo
+          style={{ overflow: "hidden" }}
         >
           <div
             className="bg-white rounded-xl w-full max-w-6xl shadow-xl flex flex-col"
             style={{
-              height: "80vh", // Más alto que antes pero sin scroll
-              maxHeight: "80vh",
+              height: "90vh", // Altura aumentada
+              maxHeight: "90vh",
             }}
           >
-            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-xl font-bold text-gray-800">Vista Previa</h3>
+            {/* Header cyan con botón X */}
+            <div className="flex justify-between items-center p-4 border-b border-cyan-800 bg-cyan-700">
+              <h3 className="text-xl font-bold text-white">Vista Previa</h3>
               <button
                 onClick={closePreview}
-                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="text-white hover:text-gray-200 cursor-pointer"
                 aria-label="Cerrar vista previa"
               >
-                <FaTimes />
+                <FaTimes className="w-5 h-5" />
               </button>
             </div>
             <div
@@ -675,7 +852,12 @@ const MaterialesAdmin: React.FC = () => {
                   src={previewURL}
                   alt="Vista previa"
                   className="max-w-full max-h-full object-contain rounded-lg"
-                  style={{ maxHeight: "100%", maxWidth: "100%" }}
+                  style={{
+                    maxHeight: "100%",
+                    maxWidth: "100%",
+                    height: "auto",
+                    width: "auto",
+                  }}
                 />
               )}
               {(previewType === "Video" ||
@@ -685,7 +867,12 @@ const MaterialesAdmin: React.FC = () => {
                   src={previewURL}
                   controls
                   className="max-w-full max-h-full rounded-lg"
-                  style={{ maxHeight: "100%", maxWidth: "100%" }}
+                  style={{
+                    maxHeight: "100%",
+                    maxWidth: "100%",
+                    height: "auto",
+                    width: "auto",
+                  }}
                 />
               )}
               {(previewType === "PDF" ||
@@ -705,7 +892,9 @@ const MaterialesAdmin: React.FC = () => {
                 previewType === "PDF" ||
                 previewType === "Solucionario"
               ) && (
-                <div className="p-4 text-center">
+                <div className="p-4 text-center text-base">
+                  {" "}
+                  {/* Tamaño aumentado */}
                   <p className="mb-4 text-cyan-900 font-semibold">
                     Vista previa no disponible para este tipo de archivo.
                   </p>
@@ -713,7 +902,7 @@ const MaterialesAdmin: React.FC = () => {
                     href={previewURL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 bg-cyan-700 text-white rounded hover:bg-cyan-900 transition"
+                    className="inline-block px-4 py-2 bg-cyan-700 text-white rounded hover:bg-cyan-900 transition text-base" // Tamaño aumentado
                   >
                     Abrir archivo en nueva pestaña
                   </a>

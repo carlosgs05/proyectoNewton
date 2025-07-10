@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { FiBarChart2 } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext"; // Ajusta la ruta según tu estructura
 
 interface GraficoDeLineasProps {
   data: Array<{
@@ -32,6 +33,7 @@ const calcularRectaDeTendencia = (
 
 const GraficoDeLineas: React.FC<GraficoDeLineasProps> = ({ data }) => {
   const navigate = useNavigate();
+  const { hasRole } = useAuth();
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(
     null
@@ -104,6 +106,7 @@ const GraficoDeLineas: React.FC<GraficoDeLineasProps> = ({ data }) => {
       hideTimeout = null;
     }
   };
+  
   const onTooltipMouseLeave = () => {
     hideTimeout = setTimeout(() => {
       setHoverIndex(null);
@@ -113,9 +116,8 @@ const GraficoDeLineas: React.FC<GraficoDeLineasProps> = ({ data }) => {
 
   return (
     <div
-      className="w-full max-w-5xl py-2 relative"
+      className="w-full max-w-5xl py-2 relative select-none"
       ref={containerRef}
-      style={{ userSelect: "none" }}
     >
       <div className="flex items-center justify-center mb-4">
         <FiBarChart2 className="text-2xl text-indigo-700 mr-2" />
@@ -203,99 +205,54 @@ const GraficoDeLineas: React.FC<GraficoDeLineasProps> = ({ data }) => {
         />
       </LineChart>
 
-      {/* Tooltip personalizado hover estilo Recharts */}
+      {/* Tooltip personalizado */}
       {hoverIndex !== null && tooltipPos && (
         <div
           onMouseEnter={onTooltipMouseEnter}
           onMouseLeave={onTooltipMouseLeave}
-          className="absolute z-50 bg-white border border-gray-300 rounded-md shadow-lg"
+          className="absolute z-50 bg-white border border-gray-300 rounded-md shadow-lg p-2 min-w-[180px] pointer-events-auto select-none font-sans text-sm text-black"
           style={{
             left: tooltipPos.x - 90,
             top: tooltipPos.y + 12,
-            minWidth: 180,
-            pointerEvents: "auto",
-            userSelect: "none",
-            fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-            fontSize: 14,
-            color: "#000",
-            padding: "8px 12px",
           }}
         >
-          <div
-            style={{ display: "flex", alignItems: "center", marginBottom: 4 }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: 10,
-                height: 10,
-                borderRadius: 50,
-                backgroundColor: "#3b82f6",
-                marginRight: 8,
-              }}
-            />
+          <div className="flex items-center mb-1">
+            <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
             <span>
               <strong>Fecha:</strong> {dataConTendencia[hoverIndex].fecha}
             </span>
           </div>
 
-          <div
-            style={{ display: "flex", alignItems: "center", marginBottom: 4 }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: 10,
-                height: 10,
-                borderRadius: 50,
-                backgroundColor: "#3b82f6",
-                marginRight: 8,
-              }}
-            />
+          <div className="flex items-center mb-1">
+            <span className="w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
             <span>
               <strong>Puntaje:</strong>{" "}
               {dataConTendencia[hoverIndex].puntaje.toFixed(3)}
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <span
-              style={{
-                display: "inline-block",
-                width: 10,
-                height: 10,
-                borderRadius: 50,
-                backgroundColor: "#f59e0b",
-                marginRight: 8,
-              }}
-            />
+          <div className="flex items-center mb-2">
+            <span className="w-3 h-3 rounded-full bg-amber-500 mr-2"></span>
             <span>
               <strong>Tendencia:</strong>{" "}
               {dataConTendencia[hoverIndex].tendencia.toFixed(3)}
             </span>
           </div>
 
-          <button
-            onClick={() =>
-              navigate(
-                `/dashboard/rendimientoSimulacros/${encodeURIComponent(
-                  dataConTendencia[hoverIndex].fecha
-                )}`
-              )
-            }
-            style={{
-              marginTop: 8,
-              fontWeight: 700,
-              background: "none",
-              border: "none",
-              color: "#1976d2",
-              cursor: "pointer",
-              padding: 0,
-              textDecoration: "underline",
-            }}
-          >
-            Ver detalles
-          </button>
+          {hasRole(2) && (
+            <button
+              onClick={() =>
+                navigate(
+                  `/dashboard/rendimientoSimulacros/${encodeURIComponent(
+                    dataConTendencia[hoverIndex].fecha
+                  )}`
+                )
+              }
+              className="mt-1 font-bold text-blue-600 hover:text-blue-800 transition-colors underline cursor-pointer"
+            >
+              Ver detalles
+            </button>
+          )}
         </div>
       )}
     </div>

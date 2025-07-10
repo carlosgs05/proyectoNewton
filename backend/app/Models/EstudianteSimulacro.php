@@ -18,7 +18,9 @@ class EstudianteSimulacro extends Model
         'idsimulacro',
         'idusuario',
         'pdfhojarespuesta',
-        'puntajetotal'
+        'puntajetotal',
+        'feedback',
+        'datossugerencias'
     ];
 
     public $timestamps = true;

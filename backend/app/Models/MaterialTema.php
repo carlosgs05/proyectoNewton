@@ -19,6 +19,7 @@ class MaterialTema extends Model
         'nombrematerial',
         'url',
         'created_at',
+        'exclusivo',
     ];
 
     // Relación: un material pertenece a un tema

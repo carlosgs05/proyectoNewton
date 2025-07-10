@@ -18,7 +18,6 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { FiTrash, FiUploadCloud, FiX } from "react-icons/fi";
-import { HiDocument } from "react-icons/hi2";
 import Swal from "sweetalert2/dist/sweetalert2.all.js";
 import Select from "react-select";
 
@@ -89,6 +88,49 @@ const customSelectStyles = {
   }),
 };
 
+// Icono PDF moderno estilo Samsung One UI
+const PDFIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M8 12h1" />
+    <path d="M8 16h1" />
+    <path d="M12 12h1" />
+    <path d="M16 16h1" />
+    <path d="M10 12v4" />
+  </svg>
+);
+
+// Icono Excel moderno estilo Samsung One UI
+const ExcelIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M16 13H8" />
+    <path d="M16 17H8" />
+    <path d="M10 9H8" />
+    <path d="M16 9h-3" />
+  </svg>
+);
+
 const Simulacros: FC = () => {
   const { hasPermission } = useAuth();
 
@@ -125,6 +167,7 @@ const Simulacros: FC = () => {
   ) as RefObject<HTMLInputElement>;
 
   const [saving, setSaving] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   // Modal de vista previa de archivo (para PDFs/Excel - pestaña gestión)
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -164,6 +207,7 @@ const Simulacros: FC = () => {
     useState<File | null>(null);
   const [previewCalificacionUrl, setPreviewCalificacionUrl] = useState<string>("");
   const [savingCalificacion, setSavingCalificacion] = useState<boolean>(false);
+  const [uploadProgressCalificacion, setUploadProgressCalificacion] = useState<number | null>(null);
 
   // Ref para input de archivo de calificación
   const archivoInputCalificacionRef = useRef<HTMLInputElement>(null);
@@ -357,6 +401,7 @@ const Simulacros: FC = () => {
     }
 
     setSaving(true);
+    setUploadProgress(0);
     const formData = new FormData();
 
     const nombreSimulacroGenerado = `SIMULACRO AREA B ${fecha}`;
@@ -376,19 +421,26 @@ const Simulacros: FC = () => {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
             "Content-Type": "multipart/form-data",
           },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
+            setUploadProgress(percentCompleted);
+          },
         }
       );
       if (res.data.success) {
-        Swal.fire("Éxito", "Simulacro registrado correctamente.", "success");
-        fetchSimulacros();
-        fetchSimulacrosOptions();
-        closeModal();
+        setUploadProgress(100);
+        setTimeout(() => {
+          Swal.fire("Éxito", "Simulacro registrado correctamente.", "success");
+          fetchSimulacros();
+          fetchSimulacrosOptions();
+          closeModal();
+          setUploadProgress(null);
+        }, 500);
       } else {
-        Swal.fire(
-          "Error",
-          res.data.message || "No se pudo registrar el simulacro.",
-          "error"
-        );
+        setSaving(false);
+        setUploadProgress(null);
       }
     } catch (error: any) {
       console.error("Error al registrar simulacro:", error);
@@ -405,8 +457,8 @@ const Simulacros: FC = () => {
           "error"
         );
       }
-    } finally {
       setSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -471,6 +523,7 @@ const Simulacros: FC = () => {
     setArchivoImagenCalificacion(null);
     setPreviewCalificacionUrl("");
     setSavingCalificacion(false);
+    setUploadProgressCalificacion(null);
   };
 
   // Manejo archivo imagen calificación - drag and drop, input change, clear
@@ -514,6 +567,7 @@ const Simulacros: FC = () => {
     }
 
     setSavingCalificacion(true);
+    setUploadProgressCalificacion(0);
 
     try {
       const formData = new FormData();
@@ -529,19 +583,26 @@ const Simulacros: FC = () => {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
             "Content-Type": "multipart/form-data",
           },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
+            setUploadProgressCalificacion(percentCompleted);
+          },
         }
       );
 
       if (response.data.success) {
-        Swal.fire("Éxito", "Simulacro estudiante registrado correctamente.", "success");
-        fetchEstudiantes(selectedSimulacro.value);
-        closeModalAsignarCalificacion();
+        setUploadProgressCalificacion(100);
+        setTimeout(() => {
+          Swal.fire("Éxito", "Simulacro estudiante registrado correctamente.", "success");
+          fetchEstudiantes(selectedSimulacro.value);
+          closeModalAsignarCalificacion();
+          setUploadProgressCalificacion(null);
+        }, 500);
       } else {
-        Swal.fire(
-          "Error",
-          response.data.message || "No se pudo registrar el simulacro estudiante.",
-          "error"
-        );
+        setSavingCalificacion(false);
+        setUploadProgressCalificacion(null);
       }
     } catch (error: any) {
       console.error("Error al registrar simulacro estudiante:", error);
@@ -550,8 +611,8 @@ const Simulacros: FC = () => {
         error?.response?.data?.message || "Ocurrió un error al registrar.",
         "error"
       );
-    } finally {
       setSavingCalificacion(false);
+      setUploadProgressCalificacion(null);
     }
   };
 
@@ -656,7 +717,7 @@ const Simulacros: FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-800">
                       {new Date(sim.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-sm text-cyan-700">
+                    <td className="px-6 py-4 text-center">
                       <button
                         onClick={() =>
                           openPreview(
@@ -665,12 +726,13 @@ const Simulacros: FC = () => {
                             }${sim.pdfexamen}`
                           )
                         }
-                        className="flex items-center hover:text-cyan-900 cursor-pointer"
+                        className="p-2 rounded-full bg-cyan-50 text-cyan-700 hover:bg-cyan-100 transition-colors duration-200 cursor-pointer"
+                        title="Ver examen"
                       >
-                        <HiDocument className="mr-1" size={18} /> Ver
+                        <PDFIcon className="w-5 h-5" />
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-sm text-cyan-700">
+                    <td className="px-6 py-4 text-center">
                       <button
                         onClick={() =>
                           openPreview(
@@ -679,12 +741,13 @@ const Simulacros: FC = () => {
                             }${sim.pdfrespuestas}`
                           )
                         }
-                        className="flex items-center hover:text-cyan-900 cursor-pointer"
+                        className="p-2 rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition-colors duration-200 cursor-pointer"
+                        title="Ver hoja de respuestas"
                       >
-                        <HiDocument className="mr-1" size={18} /> Ver
+                        <ExcelIcon className="w-5 h-5" />
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-sm text-cyan-700">
+                    <td className="px-6 py-4 text-center">
                       <button
                         onClick={() =>
                           openPreview(
@@ -693,9 +756,10 @@ const Simulacros: FC = () => {
                             }${sim.pdfsolucionario}`
                           )
                         }
-                        className="flex items-center hover:text-cyan-900 cursor-pointer"
+                        className="p-2 rounded-full bg-cyan-50 text-cyan-700 hover:bg-cyan-100 transition-colors duration-200 cursor-pointer"
+                        title="Ver solucionario"
                       >
-                        <HiDocument className="mr-1" size={18} /> Ver
+                        <PDFIcon className="w-5 h-5" />
                       </button>
                     </td>
                   </tr>
@@ -750,13 +814,13 @@ const Simulacros: FC = () => {
           {modalOpen && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl w-full max-w-7xl shadow-xl overflow-hidden">
-                <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-gray-800">
+                <div className="p-6 border-b border-cyan-800 bg-cyan-700 flex justify-between items-center">
+                  <h3 className="text-xl font-bold text-white">
                     Registrar Simulacro
                   </h3>
                   <button
                     onClick={closeModal}
-                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                    className="text-white hover:text-gray-200 cursor-pointer"
                   >
                     <FiX size={24} />
                   </button>
@@ -973,11 +1037,11 @@ const Simulacros: FC = () => {
           {previewOpen && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-xl w-full max-w-7xl shadow-xl overflow-hidden">
-                <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-gray-800">Vista Previa</h3>
+                <div className="p-6 border-b border-cyan-800 bg-cyan-700 flex justify-between items-center">
+                  <h3 className="text-xl font-bold text-white">Vista Previa</h3>
                   <button
                     onClick={closePreview}
-                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                    className="text-white hover:text-gray-200 cursor-pointer"
                   >
                     <FiX size={24} />
                   </button>
@@ -1111,7 +1175,7 @@ const Simulacros: FC = () => {
                       <td className="px-6 py-4 text-sm text-cyan-700 font-semibold">
                         {Number(est.puntajetotal).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 text-sm text-cyan-700">
+                      <td className="px-6 py-4 text-center">
                         <button
                           onClick={() =>
                             openPreviewImage(
@@ -1122,10 +1186,10 @@ const Simulacros: FC = () => {
                               }`
                             )
                           }
-                          className="flex items-center hover:text-cyan-900 cursor-pointer"
+                          className="p-2 rounded-full bg-cyan-50 text-cyan-700 hover:bg-cyan-100 transition-colors duration-200 cursor-pointer"
                           title="Ver hoja de respuesta"
                         >
-                          <HiDocument className="mr-1" size={18} /> Ver
+                          <PDFIcon className="w-5 h-5" />
                         </button>
                       </td>
                     </tr>
@@ -1297,11 +1361,11 @@ const Simulacros: FC = () => {
       {previewImageOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-4xl w-full shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-              <h3 className="text-xl font-bold text-gray-800">Hoja de Respuesta</h3>
+            <div className="p-6 border-b border-cyan-800 bg-cyan-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-white">Hoja de Respuesta</h3>
               <button
                 onClick={closePreviewImage}
-                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                className="text-white hover:text-gray-200 cursor-pointer"
               >
                 <FiX size={24} />
               </button>
@@ -1313,6 +1377,50 @@ const Simulacros: FC = () => {
                 className="max-h-[600px] w-auto object-contain border"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de progreso para registro de simulacro */}
+      {uploadProgress !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[1000]">
+          <div className="bg-white rounded-lg w-full max-w-md shadow-lg p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Registrando Simulacro...
+              </h2>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full overflow-hidden h-4">
+              <div
+                className="bg-cyan-700 h-4 transition-width duration-200"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-center text-base text-gray-600">
+              {uploadProgress}% completado
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de progreso para asignar calificación */}
+      {uploadProgressCalificacion !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[1000]">
+          <div className="bg-white rounded-lg w-full max-w-md shadow-lg p-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Asignando Calificación...
+              </h2>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full overflow-hidden h-4">
+              <div
+                className="bg-cyan-700 h-4 transition-width duration-200"
+                style={{ width: `${uploadProgressCalificacion}%` }}
+              ></div>
+            </div>
+            <p className="text-center text-base text-gray-600">
+              {uploadProgressCalificacion}% completado
+            </p>
           </div>
         </div>
       )}

@@ -2,10 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  FaFilePdf,
-  FaClone,
-  FaVideo,
-  FaFileAlt,
   FaChevronLeft,
   FaChevronRight,
   FaChevronLeft as FaChevronLeftSmall,
@@ -14,7 +10,7 @@ import {
 interface Material {
   idmaterial: number;
   idtema: number;
-  tipomaterial: string; // "PDF", "Flashcards", "Video", "Solucionario", etc.
+  tipomaterial: string;
   url: string;
   nombrematerial: string;
   created_at: string;
@@ -41,26 +37,58 @@ interface LocationState {
 
 const ITEMS_PER_MATERIAL_PAGE = 9;
 
+// Iconos para cada tipo de material
+const getMaterialIcon = (type: string) => {
+  switch (type.toLowerCase()) {
+    case "video":
+      return "🎬";
+    case "pdf":
+      return "📄";
+    case "solucionario":
+      return "📝";
+    case "flashcards":
+      return "🔖";
+    default:
+      return "📁";
+  }
+};
+
+// Obtener nombre del material para mostrar
+const getMaterialTypeName = (type: string) => {
+  switch (type.toLowerCase()) {
+    case "video":
+      return "Video";
+    case "pdf":
+      return "PDF";
+    case "solucionario":
+      return "Solucionario";
+    case "flashcards":
+      return "Flashcards";
+    default:
+      return type;
+  }
+};
+
 const CursoDetalle: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState;
   const curso = state?.curso;
 
-  // Paginacion para temas (solo un tema visible a la vez)
+  // Paginacion para temas
   const [currentTemaIndex, setCurrentTemaIndex] = useState(0);
 
-  // Paginacion por tipo material por tema: map temaId -> pagina actual
+  // Paginacion por tipo material por tema
   const [materialPageByTema, setMaterialPageByTema] = useState<
     Record<number, number>
   >({});
 
-  // Tipo activo por tema para tabs: map temaId -> tipo
+  // Tipo activo por tema para tabs
   const [activeMaterialTabByTema, setActiveMaterialTabByTema] = useState<
     Record<number, string>
   >({});
 
-  // Materiales cargados dinámicamente para cada tema
+  // Materiales cargados dinámicamente
   const [temasConMateriales, setTemasConMateriales] = useState<
     Record<number, Material[]>
   >({});
@@ -81,7 +109,7 @@ const CursoDetalle: React.FC = () => {
               ...prev,
               [tema.idtema]: res.data.data,
             }));
-            // Inicializar pestaña activa y paginación por tema si no existe
+            // Inicializar pestaña activa y paginación
             setActiveMaterialTabByTema((prev) => {
               if (prev[tema.idtema]) return { ...prev };
               const tipos = Array.from(
@@ -92,10 +120,10 @@ const CursoDetalle: React.FC = () => {
                 [tema.idtema]: tipos[0] ? String(tipos[0]) : "",
               };
             });
-            setMaterialPageByTema((prev) => {
-              if (prev[tema.idtema]) return prev;
-              return { ...prev, [tema.idtema]: 1 };
-            });
+            setMaterialPageByTema((prev) => ({
+              ...prev,
+              [tema.idtema]: 1,
+            }));
           }
         })
         .catch((err) => {
@@ -111,22 +139,6 @@ const CursoDetalle: React.FC = () => {
     navigate("/dashboard/contenidos");
     return null;
   }
-
-  const iconForTipo = (tipomaterial: string) => {
-    const commonClasses = "w-6 h-6 text-cyan-700";
-    switch (tipomaterial) {
-      case "PDF":
-        return <FaFilePdf className={commonClasses} />;
-      case "Flashcards":
-        return <FaClone className={commonClasses} />;
-      case "Video":
-        return <FaVideo className={commonClasses} />;
-      case "Solucionario":
-        return <FaFileAlt className={commonClasses} />;
-      default:
-        return <FaFileAlt className={commonClasses} />;
-    }
-  };
 
   const totalTemas = curso.temas.length;
   const temaActual = curso.temas[currentTemaIndex];
@@ -216,8 +228,8 @@ const CursoDetalle: React.FC = () => {
         <iframe
           src={src}
           title={modalMaterial.nombrematerial}
-          className="w-full h-full"
-          style={{ border: "none", maxHeight: "80vh" }}
+          className="w-full h-full min-h-[40vh]"
+          style={{ border: "none" }}
         />
       );
     } else if (
@@ -227,7 +239,7 @@ const CursoDetalle: React.FC = () => {
       return (
         <video
           controls
-          className="w-full h-full max-h-[80vh] max-w-full object-contain"
+          className="w-full h-full min-h-[40vh] max-w-full object-contain"
           style={{ display: "block" }}
         >
           <source src={src} />
@@ -236,7 +248,7 @@ const CursoDetalle: React.FC = () => {
       );
     } else if (modalMaterial.url.match(/\.(jpg|jpeg|png|gif|bmp|svg)$/i)) {
       return (
-        <div className="w-full h-[80vh] flex justify-center items-center">
+        <div className="w-full min-h-[40vh] flex justify-center items-center">
           <img
             src={src}
             alt={modalMaterial.nombrematerial}
@@ -247,7 +259,7 @@ const CursoDetalle: React.FC = () => {
       );
     } else {
       return (
-        <div className="p-4 text-center">
+        <div className="p-4 text-center min-h-[40vh] flex flex-col justify-center">
           <p className="mb-4 text-cyan-900 font-semibold">
             Vista previa no disponible para este tipo de archivo.
           </p>
@@ -302,36 +314,53 @@ const CursoDetalle: React.FC = () => {
               key={tipo}
               type="button"
               onClick={() => handleChangeMaterialTab(tipo)}
-              className={`px-5 py-2 rounded-full font-semibold whitespace-nowrap select-none transition
-              ${
+              className={`px-4 py-2 rounded-2xl text-base font-medium transition-all flex items-center cursor-pointer ${
                 activeTab === tipo
-                  ? "bg-cyan-700 text-white shadow-lg shadow-cyan-300/50"
-                  : "bg-cyan-100 text-cyan-700 hover:bg-cyan-300 hover:text-cyan-900"
-              } cursor-pointer`}
+                  ? "bg-cyan-600 text-white shadow-md"
+                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
               aria-current={activeTab === tipo ? "page" : undefined}
             >
-              {tipo}
+              <span className="mr-1">{getMaterialIcon(tipo)}</span>
+              {getMaterialTypeName(tipo)}
             </button>
           ))}
         </nav>
 
-        {/* Grid materiales paginados */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+        {/* Grid materiales paginados en cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
           {materialesPaginados.map((mat) => (
-            <button
+            <div
               key={mat.idmaterial}
               onClick={() => openModal(mat)}
-              className="flex flex-col items-center space-y-2 bg-cyan-50 rounded-2xl p-5 hover:bg-cyan-100 transition-shadow border border-transparent hover:border-cyan-500 shadow-md cursor-pointer select-none"
-              aria-label={`${mat.tipomaterial}: ${mat.nombrematerial}`}
-              type="button"
+              className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-100"
             >
-              <span className="text-cyan-700">
-                {iconForTipo(mat.tipomaterial)}
-              </span>
-              <span className="font-semibold text-cyan-900 text-center truncate max-w-full">
-                {mat.nombrematerial}
-              </span>
-            </button>
+              <div
+                className={`bg-gradient-to-r from-cyan-50 to-cyan-100 p-4 flex items-center justify-center h-40`}
+              >
+                <div className="text-center">
+                  <span className="text-5xl text-cyan-600">
+                    {getMaterialIcon(mat.tipomaterial)}
+                  </span>
+                  <h3 className="mt-2 text-cyan-800 font-semibold">
+                    {getMaterialTypeName(mat.tipomaterial)}
+                  </h3>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="text-gray-800 font-semibold text-lg mb-2">
+                  {mat.nombrematerial}
+                </h3>
+                <div className="space-y-2 text-sm text-gray-600 mt-3">
+                  <div className="bg-cyan-50 text-cyan-700 px-2 py-1 rounded inline-block">
+                    {curso.nombrecurso}
+                  </div>
+                  <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded inline-block">
+                    {temaActual.nombretema}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
           {materialesPaginados.length === 0 && (
             <p className="text-cyan-700 italic col-span-full text-center select-none">
@@ -342,33 +371,54 @@ const CursoDetalle: React.FC = () => {
 
         {/* Paginacion para materiales */}
         {totalMaterialPages > 1 && (
-          <div className="flex justify-center items-center space-x-4 my-12 select-none">
-            <button
-              onClick={() => handleChangeMaterialPage(currentMaterialPage - 1)}
-              disabled={currentMaterialPage === 1}
-              className={`p-2 border border-cyan-700 text-cyan-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-50 cursor-pointer`}
-              aria-label="Página anterior de materiales"
-              type="button"
-            >
-              <FaChevronLeftSmall className="w-4 h-4" />
-            </button>
-            <span className="font-semibold text-cyan-700 text-base">
+          <div className="mt-8 flex flex-col items-center">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleChangeMaterialPage(currentMaterialPage - 1)}
+                disabled={currentMaterialPage === 1}
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentMaterialPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                } border border-gray-300 transition-colors`}
+              >
+                <FaChevronLeftSmall className="w-4 h-4" />
+              </button>
+              {Array.from({ length: totalMaterialPages }, (_, i) => i + 1).map(
+                (number) => (
+                  <button
+                    key={number}
+                    onClick={() => handleChangeMaterialPage(number)}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                      currentMaterialPage === number
+                        ? "bg-cyan-600 text-white shadow-md"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    } border border-gray-300 transition-all cursor-pointer`}
+                  >
+                    {number}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => handleChangeMaterialPage(currentMaterialPage + 1)}
+                disabled={currentMaterialPage === totalMaterialPages}
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentMaterialPage === totalMaterialPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50 cursor-pointer"
+                } border border-gray-300 transition-colors`}
+              >
+                <FaChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="mt-4 text-gray-600 text-sm">
               Página {currentMaterialPage} de {totalMaterialPages}
-            </span>
-            <button
-              onClick={() => handleChangeMaterialPage(currentMaterialPage + 1)}
-              disabled={currentMaterialPage === totalMaterialPages}
-              className={`p-2 border border-cyan-700 text-cyan-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cyan-50 cursor-pointer`}
-              aria-label="Página siguiente de materiales"
-              type="button"
-            >
-              <FaChevronRight className="w-4 h-4" />
-            </button>
+            </div>
           </div>
         )}
 
         {/* Indicador de tema (Semana) y paginación con tooltip */}
-        <div className="flex justify-between items-center space-x-6 mb-6 select-none">
+        <div className="flex justify-between items-center space-x-6 mb-6 select-none mt-8">
           <button
             onClick={() => handleChangeTemaPage(currentTemaIndex - 1)}
             disabled={currentTemaIndex === 0}
@@ -405,32 +455,81 @@ const CursoDetalle: React.FC = () => {
       {/* Modal */}
       {modalOpen && modalMaterial && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
           onClick={closeModal}
         >
           <div
-            className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] p-4 relative shadow-lg flex flex-col"
+            className="bg-white rounded-xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={closeModal}
-              aria-label="Cerrar modal"
-              className="absolute top-3 right-3 text-cyan-700 hover:text-cyan-900 font-bold text-xl cursor-pointer"
-              type="button"
-            >
-              ×
-            </button>
-            <h3
-              id="modal-title"
-              className="text-xl font-semibold text-cyan-900 mb-4 select-text"
-            >
-              {modalMaterial.nombrematerial}
-            </h3>
-            <div className="overflow-hidden flex-grow">
-              {renderModalContent()}
+            {/* Encabezado del modal */}
+            <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 p-6 text-white flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-4xl mr-3">
+                  {getMaterialIcon(modalMaterial.tipomaterial)}
+                </span>
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {getMaterialTypeName(modalMaterial.tipomaterial)}
+                  </h2>
+                  <p className="text-cyan-100">
+                    {modalMaterial.tipomaterial.toUpperCase()} •{" "}
+                    {curso.nombrecurso}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={closeModal}
+                className="text-white hover:text-cyan-100 cursor-pointer"
+                aria-label="Cerrar modal"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Contenido del material */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-6 flex-1 flex flex-col">
+                {/* Información del tema y curso */}
+                <div className="mb-4">
+                  <h3
+                    id="modal-title"
+                    className="text-xl font-semibold text-gray-800 mb-2"
+                  >
+                    {modalMaterial.nombrematerial}
+                  </h3>
+                  <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                    <span className="bg-cyan-100 text-cyan-700 px-2 py-1 rounded">
+                      {curso.nombrecurso}
+                    </span>
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                      {temaActual.nombretema}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Visualización del recurso - Altura reducida */}
+                <div className="h-[60vh] border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex">
+                  {renderModalContent()}
+                </div>
+              </div>
             </div>
           </div>
         </div>

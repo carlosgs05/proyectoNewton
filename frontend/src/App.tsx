@@ -16,6 +16,8 @@ import TemasAdmin from "./dashboard/pages/TemasAdmin";
 import MaterialesAdmin from "./dashboard/pages/MaterialesAdmin";
 import Simulacros from "./dashboard/pages/Simulacros";
 import DetallesSimulacro from "./dashboard/pages/reportes/DetalleSimulacro";
+import MetodoEstudio from "./dashboard/pages/MetodoEstudio";
+import MaterialPriorizado from "./dashboard/pages/MaterialPriorizado";
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
             <Route path="mi-perfil" element={<MiPerfil />} />
             <Route path="usuarios" element={<Usuarios />} />
             <Route path="contenido" element={<Contenidos />} />
+            <Route path="material-exclusivo" element={<MaterialPriorizado />} />
+            {/* Rutas protegidas para los contenidos */}
             <Route path="simulacros" element={<Simulacros />} />
             <Route path="cursos/:idcurso/temas" element={<TemasAdmin />} />
             <Route
@@ -48,6 +52,7 @@ function App() {
               path="rendimientoSimulacros/:fecha"
               element={<DetallesSimulacro />}
             />
+            <Route path="metodoEstudio" element={<MetodoEstudio />} />
             {/* Rutas protegidas para los reportes */}
             <Route path="consumoMaterial" element={<ConsumoMaterial />} />
           </Route>

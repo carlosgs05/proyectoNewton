@@ -1,63 +1,11 @@
-# import google.generativeai as genai
-
-# # 1. Configurar clave de API
-# genai.configure(api_key="AIzaSyCBFd1kU0irpvTGMERq_gwH1B519WDTds4")
-
-# # 2. Modelo gratuito
-# cliente = genai.GenerativeModel("gemini-1.5-flash")
-
-# # 3. Ruta al PDF (asegúrate de que existe)
-# pdf_path = r"D:\UNT\IX CICLO\CURSOS\GESTIÓN DE PROYECTOS DE TI\PROYECTO\PROYECTO NEWTON\python\simulacro_area_b_01.pdf"
-# pdf_file = genai.upload_file(pdf_path)
-
-# # 4. Lista de preguntas que deseas analizar
-# numeros_preguntas = [3, 5, 8]
-
-# # 5. Prompt modificado
-# prompt = f"""
-# Analiza el PDF adjunto que contiene un examen de simulacro con preguntas numeradas como 1., 2., 3., etc.
-
-# Tu tarea es:
-# - Para cada una de las siguientes preguntas: {numeros_preguntas}
-# - Indica el **nombre del curso** al que pertenece (por ejemplo: Comunicación, Matemática, Razonamiento Verbal, Ciencia, etc.)
-# - También indica el **tema específico** que trata la pregunta (por ejemplo: comprensión de lectura, álgebra, biología, etc.)
-
-# No incluyas el enunciado completo de la pregunta. Solo responde en el siguiente formato:
-
-# Pregunta 3:  
-# Curso: Comunicación  
-# Tema: Comprensión lectora
-
-# Pregunta 5:  
-# Curso: Matemática  
-# Tema: Álgebra
-
-# (etc.)
-# """
-
-# # 6. Llamada al modelo con límite de tokens
-# respuesta = cliente.generate_content(
-#     [prompt, pdf_file],
-#     generation_config={
-#         "max_output_tokens": 512
-#     },
-#     stream=False
-# )
-
-# # 7. Mostrar resultado
-# print("📚 Clasificación por curso y tema:")
-# print(respuesta.text)
-
-# # 8. (Opcional) Borrar archivo del servidor
-# genai.delete_file(pdf_file.name)
-
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict, Set, Tuple
 import tempfile, os, json
 import google.generativeai as genai
-from difflib import get_close_matches
+import re
+from collections import defaultdict
 
 # Configurar API key
 genai.configure(api_key="AIzaSyCBFd1kU0irpvTGMERq_gwH1B519WDTds4")
@@ -77,21 +25,45 @@ class Curso(BaseModel):
 class InputData(BaseModel):
     cursos: List[Curso]
 
-@router.post("/feedback-simulacro")
+class TemaRecomendado(BaseModel):
+    idtema: int
+    nombretema: str
+
+class CursoTemasRecomendados(BaseModel):
+    nombrecurso: str
+    idcurso: int
+    temas: List[TemaRecomendado]
+
+class OutputData(BaseModel):
+    feedback: str
+    temas_recomendados: List[CursoTemasRecomendados]
+
+@router.post("/feedback-simulacro", response_model=OutputData)
 async def feedback_simulacro(file: UploadFile = File(...), datos: str = Form(...)):
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="El archivo debe ser un PDF")
 
     try:
+        # Procesar datos de entrada
         datos_json = json.loads(datos)
         input_data = InputData(**datos_json)
-
-        temas_validos = {}
-        temas_id_por_nombre = {}
+        
+        # Crear estructuras para búsqueda rápida
+        # 1. Mapa de temas por nombre (en minúsculas) para todos los cursos
+        tema_map = {}
+        # 2. Mapa de curso por nombre de tema
+        curso_por_tema = {}
+        # 3. Información de cursos por nombre
+        curso_info = {}
+        
         for curso in input_data.cursos:
-            key = (curso.idcurso, curso.nombrecurso.lower().strip())
-            temas_validos[key] = {t.nombretema.lower().strip(): t.idtema for t in curso.temas}
-            temas_id_por_nombre.update({(key, t.nombretema.lower().strip()): (t.idtema, t.nombretema) for t in curso.temas})
+            curso_key = curso.nombrecurso.lower()
+            curso_info[curso_key] = (curso.idcurso, curso.nombrecurso)
+            
+            for tema in curso.temas:
+                tema_key = tema.nombretema.lower()
+                tema_map[tema_key] = tema
+                curso_por_tema[tema_key] = curso_key
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(await file.read())
@@ -99,7 +71,7 @@ async def feedback_simulacro(file: UploadFile = File(...), datos: str = Form(...
 
         pdf_file = genai.upload_file(pdf_path)
 
-        # PROMPT MEJORADO CON INSTRUCCIONES DE CONSISTENCIA
+        # PROMPT MEJORADO CON LAS NUEVAS INSTRUCCIONES
         prompt = """
 Eres un docente preuniversitario experto en diversas asignaturas. Preparas estudiantes para ingresar a la Universidad Nacional de Trujillo (UNT), Perú. Te proporciono un PDF de un simulacro con preguntas numeradas y una lista de cursos, temas y errores por curso.
 
@@ -116,40 +88,40 @@ Tu análisis debe cumplir estas reglas:
 9. Si en una ejecución anterior esta pregunta ya fue clasificada en un tema específico, debes mantener exactamente el mismo tema (mismo `idtema` y `nombretema`) en todas las ejecuciones posteriores con los mismos datos de entrada. Considera esto como una política estricta de consistencia en la clasificación.
 10. No cambies de tema para una pregunta a menos que se modifiquen los datos de entrada o el contenido del PDF. La coherencia entre ejecuciones es prioritaria, especialmente si la pregunta ya ha sido asociada con éxito a un tema.
 11. Tu rol incluye actuar como un docente sistemático que registra decisiones previas y las mantiene para asegurar una retroalimentación estable y confiable al estudiante.
+        12. Si necesitas mencionar un tema que no aparece textualmente en la lista pero que conceptualmente corresponde a uno existente:
+            - Identifica el tema más similar conceptualmente de la lista proporcionada
+            - Usa EXACTAMENTE el nombre textual del tema como aparece en los datos de entrada
+            - ENCIERRA SIEMPRE el nombre del tema entre comillas dobles
+        13. Ejemplo: Si el tema en el JSON es "Oferta y demanda" pero tú piensas en "Ley de oferta":
+            - Usa "Oferta y demanda" (el nombre exacto del JSON) entre comillas dobles
 
-Además, genera un segundo bloque llamado `"feedback"` que cumpla lo siguiente:
 
-- Escribe un párrafo largo, motivador y pedagógico.
-- Resume los cursos donde el estudiante tuvo errores, mencionando preguntas específicas y temas asignados.
+Además, genera un bloque de texto llamado `"feedback"` que cumpla lo siguiente:
+
+- Escribe un párrafo no muy extenso (feedback resumido) pero que sea motivador y pedagógico y abarque lo siguiente:
+- Resume los cursos donde el estudiante tuvo errores, mencionando **todos los cursos** sin excepción.
+- Para cada curso:
+   * Si tiene 4 o menos preguntas erradas: menciona los números de pregunta específicos
+   * Si tiene más de 4 preguntas erradas: menciona los temas más importantes/relevantes (no menciones IDs)
+- Al mencionar temas, debes usar EXACTAMENTE el nombre textual del tema como aparece en los datos de entrada, y ENCERRARLO ENTRE COMILLAS DOBLES. Por ejemplo: "Álgebra Lineal" o "Funciones Trigonométricas".
 - Incluye recomendaciones concretas por curso y tema.
+- **Nunca menciones IDs de cursos o temas** en el feedback.
 - Usa un tono amigable y profesional como el de un maestro que guía a su estudiante a mejorar.
 - Finaliza motivando al estudiante a continuar mejorando.
 
-Devuelve el resultado en el siguiente formato JSON exacto:
-
-{
-  "feedback": "Texto motivador que incluya observaciones por curso, temas, recomendaciones y cierre positivo.",
-  "temas_detectados": [
-    {
-      "nombrecurso": "...",
-      "idcurso": ...,
-      "errores": [
-        {"numeropregunta": ..., "idtema": ..., "nombretema": "..."}
-      ]
-    }
-  ]
-}
+Devuelve SOLO el texto del "feedback", SIN ningún otro contenido. Asegúrate de que el texto comience directamente con el feedback y no incluya encabezados.
 """
 
         for curso in input_data.cursos:
-            temas = ', '.join([f"{t.nombretema} (id: {t.idtema})" for t in curso.temas])
+            # Lista de temas con nombres textuales exactos
+            temas = ', '.join([f'"{t.nombretema}"' for t in curso.temas])
             errores = ', '.join(map(str, curso.lista_errores))
-            prompt += f"\nCurso: {curso.nombrecurso} (id: {curso.idcurso})\nTemas disponibles: {temas}\nPreguntas erradas: {errores}\n"
+            prompt += f"\nCurso: {curso.nombrecurso}\nTemas disponibles: {temas}\nPreguntas erradas: {errores}\n"
 
         modelo = genai.GenerativeModel("gemini-1.5-flash")
         respuesta = modelo.generate_content(
             [prompt, pdf_file],
-            generation_config={"max_output_tokens": 2048,"temperature": 0},
+            generation_config={"temperature": 0},
             stream=False
         )
 
@@ -157,51 +129,60 @@ Devuelve el resultado en el siguiente formato JSON exacto:
         genai.delete_file(pdf_file.name)
 
         raw_text = respuesta.text.strip()
-        try:
-            parsed = json.loads(raw_text)
-            feedback = parsed.get("feedback")
-            temas_detectados = parsed.get("temas_detectados")
-        except json.JSONDecodeError:
-            feedback = None
-            temas_detectados = []
-            if '"feedback"' in raw_text and '"temas_detectados"' in raw_text:
-                start = raw_text.find('{')
-                end = raw_text.rfind('}') + 1
-                try:
-                    parsed = json.loads(raw_text[start:end])
-                    feedback = parsed.get("feedback")
-                    temas_detectados = parsed.get("temas_detectados")
-                except:
-                    pass
-            if feedback is None:
-                feedback = raw_text
 
-        for curso_resultado in temas_detectados:
-            idcurso = curso_resultado["idcurso"]
-            nombrecurso = curso_resultado["nombrecurso"].lower().strip()
-            key = (idcurso, nombrecurso)
-            temas_validos_curso = temas_validos.get(key, {})
-
-            errores_actualizados = []
-            for error in curso_resultado.get("errores", []):
-                nombre_detectado = error["nombretema"].lower().strip()
-                if nombre_detectado in temas_validos_curso:
-                    error["idtema"] = temas_validos_curso[nombre_detectado]
-                    errores_actualizados.append(error)
-                else:
-                    parecido = get_close_matches(nombre_detectado, temas_validos_curso.keys(), n=1)
-                    if parecido:
-                        idtema = temas_validos_curso[parecido[0]]
-                        error["nombretema"] = parecido[0]
-                        error["idtema"] = idtema
-                        errores_actualizados.append(error)
-            curso_resultado["errores"] = errores_actualizados
-
-        return {
-            "success": True,
-            "feedback": feedback,
-            "temas_detectados": temas_detectados
-        }
+        # Verificar si la respuesta es nula o vacía
+        if not raw_text:
+            raise ValueError("El servicio de feedback devolvió una respuesta vacía")
+            
+        # Si el feedback incluye un encabezado, lo removemos
+        if raw_text.startswith("Feedback:"):
+            raw_text = raw_text.replace("Feedback:", "").strip()
+        
+        # ANALIZAR EL FEEDBACK PARA EXTRAER TEMAS MENCIONADOS
+        # 1. Extraer todos los temas mencionados entre comillas dobles
+        temas_mencionados = re.findall(r'"([^"]+)"', raw_text)
+        
+        # 2. Crear un diccionario para almacenar los temas encontrados por curso
+        # Estructura: {curso_key: Set[(idtema, nombretema)]}
+        temas_encontrados_por_curso = defaultdict(set)
+        
+        # 3. Para cada tema mencionado, buscar en nuestro mapa de temas
+        for tema_nombre in temas_mencionados:
+            tema_key = tema_nombre.lower()
+            
+            # Buscar en el mapa de temas
+            if tema_key in tema_map:
+                tema = tema_map[tema_key]
+                curso_key = curso_por_tema[tema_key]
+                
+                # Agregar a la estructura de temas encontrados
+                temas_encontrados_por_curso[curso_key].add((tema.idtema, tema.nombretema))
+        
+        # 4. Construir la estructura de respuesta
+        temas_recomendados = []
+        
+        for curso_key, temas_set in temas_encontrados_por_curso.items():
+            if curso_key in curso_info:
+                idcurso, nombrecurso_original = curso_info[curso_key]
+                
+                temas_list = [
+                    TemaRecomendado(idtema=t[0], nombretema=t[1])
+                    for t in temas_set
+                ]
+                
+                temas_recomendados.append(
+                    CursoTemasRecomendados(
+                        nombrecurso=nombrecurso_original,
+                        idcurso=idcurso,
+                        temas=temas_list
+                    )
+                )
+        
+        # 5. Preparar respuesta final
+        return OutputData(
+            feedback=raw_text,
+            temas_recomendados=temas_recomendados
+        )
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"Error en procesamiento: {str(e)}"})

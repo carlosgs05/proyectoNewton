@@ -5,12 +5,11 @@ import {
   FaPlus,
   FaChevronLeft,
   FaChevronRight,
-  FaEdit,
-  FaTrash,
   FaSpinner,
   FaArrowLeft,
   FaStream,
 } from "react-icons/fa";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import Swal from "sweetalert2/dist/sweetalert2.all.js";
 
 interface Curso {
@@ -161,7 +160,7 @@ const TemasAdmin: React.FC = () => {
       <div className="flex justify-end mb-6">
         <button
           onClick={() => openModal()}
-          className="flex items-center px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg shadow-md cursor-pointer"
+          className="flex items-center px-4 py-2 bg-cyan-700 hover:bg-cyan-600 text-white rounded-lg shadow-md cursor-pointer transition-colors duration-200"
         >
           <FaPlus className="mr-2 text-sm" /> Registrar Tema
         </button>
@@ -187,7 +186,7 @@ const TemasAdmin: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {paginated.map((tema, idx) => (
-              <tr key={tema.idtema} className="hover:bg-gray-100">
+              <tr key={tema.idtema} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-sm text-gray-700">
                   {(page - 1) * ITEMS_PER_PAGE + idx + 1}
                 </td>
@@ -202,24 +201,28 @@ const TemasAdmin: React.FC = () => {
                         { state: { curso, tema } }
                       )
                     }
-                    className="flex items-center hover:text-cyan-900 cursor-pointer"
+                    className="flex items-center hover:text-cyan-900 cursor-pointer transition-colors"
                   >
                     <FaStream className="mr-1" /> Ver Materiales
                   </button>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800 space-x-4">
-                  <button
-                    onClick={() => openModal(tema)}
-                    className="text-yellow-600 hover:text-yellow-800 cursor-pointer"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(tema)}
-                    className="text-red-600 hover:text-red-800 cursor-pointer"
-                  >
-                    <FaTrash />
-                  </button>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => openModal(tema)}
+                      className="p-2 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors duration-200 cursor-pointer"
+                      title="Editar"
+                    >
+                      <FiEdit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tema)}
+                      className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition-colors duration-200 cursor-pointer"
+                      title="Eliminar"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -245,7 +248,7 @@ const TemasAdmin: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
             disabled={page === 1}
-            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer"
+            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
           >
             <FaChevronLeft className="w-4 h-4" />
           </button>
@@ -255,7 +258,7 @@ const TemasAdmin: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
             disabled={page === totalPages}
-            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer"
+            className="p-2.5 border border-cyan-700 text-cyan-700 hover:bg-cyan-50 rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
           >
             <FaChevronRight className="w-4 h-4" />
           </button>
@@ -291,14 +294,14 @@ const TemasAdmin: React.FC = () => {
               <div className="flex justify-center mt-6 space-x-4">
                 <button
                   onClick={closeModal}
-                  className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer"
+                  className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-6 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2 bg-cyan-800 hover:bg-cyan-900 text-white rounded-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer transition-colors"
                 >
                   {saving && <FaSpinner className="animate-spin" />}{" "}
                   {saving ? "Guardando..." : "Guardar"}

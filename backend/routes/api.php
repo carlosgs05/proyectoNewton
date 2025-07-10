@@ -5,10 +5,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RolController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\CursoController;
-use App\Http\Controllers\ETLController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulacroController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\MetodoAprendizajeController;
 
 
 
@@ -74,19 +74,15 @@ Route::get('/notificaciones/{idusuario}', [NotificacionController::class, 'lista
 Route::put('/notificaciones/{idnotificacion}/leer', [NotificacionController::class, 'marcarComoLeida']);
 
 
-// Rutas ETL
-Route::prefix('etl')->group(function () {
-    Route::post('/full', [ETLController::class, 'runFullETL']);
-    Route::post('/usuario', [ETLController::class, 'runUsuarioETL']);
-    Route::post('/tiempo', [ETLController::class, 'runTiempoETL']);
-    Route::post('/tema', [ETLController::class, 'runTemaETL']);
-});
+// Rutas de métodos de aprendizaje
+Route::get('/metodos-aprendizaje/{idusuario}/{mes}/{anio}', [MetodoAprendizajeController::class, 'getMetodoAprendizajeEstudiante']);
+Route::get('/cursos-temas', [MetodoAprendizajeController::class, 'getCursosConTemas']);
+Route::get('/cursos-recomendados/{idusuario}/{mes}/{anio}', [MetodoAprendizajeController::class, 'getCursosRecomendados']);
+Route::post('/metodos-aprendizaje/registrar', [MetodoAprendizajeController::class, 'registrarMetodoAprendizaje']);
+Route::get('/obtener-materiales-exclusivos/{idusuario}/{mes}/{año}', [MetodoAprendizajeController::class, 'obtenerMaterialesExclusivos']);
 
 // Rutas de reportes
+Route::get('/runETL', [ReportController::class, 'runETL']);
 Route::post('report/reporteSimulacrosPuntaje', [ReportController::class, 'reporteSimulacrosPuntaje']);
 Route::get('/report/consumoMaterial', [ReportController::class, 'reportesMaterial']);
 Route::post('/report/simulacroCursoDetalle', [ReportController::class, 'reporteSimulacroCursoDetalle']);
-
-
-// Ruta para procesar simulacro de un estudiante
-Route::post('simulacro_estudiante/registrar', [SimulacroController::class, 'registrarSimulacroEstudiante']);

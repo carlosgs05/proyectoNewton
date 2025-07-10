@@ -35,4 +35,9 @@ class Usuario extends Model
     {
         return $this->belongsTo(Rol::class, 'idrol');
     }
+
+    public function metodosAprendizaje()
+    {
+        return $this->hasMany(MetodoAprendizaje::class, 'idusuario', 'idusuario');
+    }
 }

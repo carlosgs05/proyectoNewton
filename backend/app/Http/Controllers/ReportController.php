@@ -8,6 +8,29 @@ use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
+
+    public function runETL()
+    {
+        try {
+            // Ejecutar el procedimiento almacenado en la conexión datamart
+            DB::connection('datamart_newton')->statement('CALL sp_refresh_etl()');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proceso ETL ejecutado correctamente'
+            ]);
+        } catch (\Exception $e) {
+            // Registrar el error
+            Log::error('Error en ETL: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al ejecutar ETL: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     // Obtener el rendimiento del usuario en los simulacros
     public function reporteSimulacrosPuntaje(Request $request)
     {

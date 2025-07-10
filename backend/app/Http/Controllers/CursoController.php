@@ -15,7 +15,7 @@ class CursoController extends Controller
 
     //-------------------------------------METODOS PARA CURSOS-------------------------------------//
 
-public function obtenerDatosGeneralesCursos()
+    public function obtenerDatosGeneralesCursos()
     {
         try {
             // Eager loading de temas y materiales
@@ -33,7 +33,7 @@ public function obtenerDatosGeneralesCursos()
                 'message' => 'Error al obtener los cursos'
             ], 500);
         }
-    }   
+    }
 
     // Recupera todos los cursos con sus temas y materiales.
     public function ObtenerCursosYDetalles(): JsonResponse
@@ -253,12 +253,25 @@ public function obtenerDatosGeneralesCursos()
             return response()->json(['success' => false, 'message' => 'Tema no encontrado.'], 404);
         }
 
+        // Validación de campos obligatorios
         if (!$request->has('tipomaterial') || trim($request->tipomaterial) === '') {
             $errors['tipomaterial'][] = 'El tipo de material es obligatorio.';
         }
 
         if (!$request->has('nombrematerial') || trim($request->nombrematerial) === '') {
             $errors['nombrematerial'][] = 'El nombre del material es obligatorio.';
+        }
+
+        // Validación campo exclusivo (booleano obligatorio)
+        if (!$request->has('exclusivo')) {
+            $errors['exclusivo'][] = 'El campo exclusivo es obligatorio.';
+        } else {
+            $exclusivo = $request->exclusivo;
+            $valoresAceptados = [true, false, 0, 1, '0', '1'];
+
+            if (!in_array($exclusivo, $valoresAceptados, true)) {
+                $errors['exclusivo'][] = 'El campo exclusivo debe ser un valor booleano.';
+            }
         }
 
         if (!$request->hasFile('archivo')) {
@@ -280,11 +293,16 @@ public function obtenerDatosGeneralesCursos()
             $filename = now()->format('YmdHis') . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $file->move($folderPath, $filename);
 
+            // Convertir valor a booleano
+            $exclusivo = $request->exclusivo;
+            $valorBooleano = ($exclusivo === true || $exclusivo === 1 || $exclusivo === '1');
+
             $material = MaterialTema::create([
                 'idtema' => $idTema,
                 'tipomaterial' => $request->tipomaterial,
                 'nombrematerial' => $request->nombrematerial,
                 'url' => 'materiales/' . $filename,
+                'exclusivo' => $valorBooleano,
                 'created_at' => now(),
             ]);
 
@@ -297,9 +315,9 @@ public function obtenerDatosGeneralesCursos()
 
     public function updateMaterial(Request $request, $id): JsonResponse
     {
-        // 1) Buscar el material o falla con 404 automáticamente
+        // 1) Buscar el material
         $material = MaterialTema::find($id);
-        if (! $material) {
+        if (!$material) {
             return response()->json([
                 'success' => false,
                 'message' => 'Material no encontrado.',
@@ -310,11 +328,14 @@ public function obtenerDatosGeneralesCursos()
         $validated = $request->validate([
             'tipomaterial'   => 'required|in:Flashcards,PDF,Video,Solucionario',
             'nombrematerial' => 'required|string|max:255',
+            'exclusivo'      => 'required|boolean', // Validación agregada
             'archivo'        => 'nullable|file',
         ], [
             'tipomaterial.required'   => 'El tipo de material es obligatorio.',
             'tipomaterial.in'         => 'El tipo de material no es válido.',
             'nombrematerial.required' => 'El nombre del material es obligatorio.',
+            'exclusivo.required'      => 'El campo exclusivo es obligatorio.', // Mensaje agregado
+            'exclusivo.boolean'       => 'El campo exclusivo debe ser un valor booleano.', // Mensaje agregado
             'archivo.file'            => 'El archivo debe ser un fichero válido.',
         ]);
 
@@ -323,7 +344,7 @@ public function obtenerDatosGeneralesCursos()
             if ($request->hasFile('archivo')) {
                 $file       = $request->file('archivo');
                 $folderPath = public_path('materiales');
-                if (! file_exists($folderPath)) {
+                if (!file_exists($folderPath)) {
                     mkdir($folderPath, 0777, true);
                 }
                 $filename = now()
@@ -344,6 +365,7 @@ public function obtenerDatosGeneralesCursos()
             // 4) Actualizar resto de campos
             $material->tipomaterial   = $validated['tipomaterial'];
             $material->nombrematerial = $validated['nombrematerial'];
+            $material->exclusivo      = (bool) $request->exclusivo; // Campo agregado
             $material->save();
 
             // 5) Devolver éxito

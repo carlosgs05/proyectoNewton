@@ -266,9 +266,8 @@ class SimulacroController extends Controller
                 $notificacionesMasivas[] = [
                     'idusuario'   => $idUsuario,
                     'titulo'      => 'Nuevo simulacro disponible',
-                    'mensaje'     => "Se ha registrado un simulacro «{$nombreSimulacroInput}» para la fecha {$fecha}",
-                    // Puedes ajustar la URL a tu frontend; por ejemplo: /simulacros/{id}
-                    'url_destino' => "/simulacros/{$idSimulacro}",
+                    'mensaje'     => "Se ha registrado un simulacro «{$nombreSimulacroInput}» para la fecha {$fecha}  ¡No te lo pierdas!",
+                    'url_destino' => null,
                     'leida'       => false,
                     'created_at'  => $now,
                     'updated_at'  => null,
@@ -391,38 +390,234 @@ class SimulacroController extends Controller
             // Calcular puntaje total
             $puntajetotal = ($correctas * 4.07) - ($incorrectas * 1.0175);
 
-            // Insertar PRIMERO en estudiante_simulacro
+            /*****************************************************************
+             * SECCIÓN PARA GENERAR EL JSON DE ERRORES POR CURSO
+             *****************************************************************/
+
+            // Paso 1: Filtrar solo las preguntas erradas
+            $errores = array_filter($respuestasAInsertar, function ($respuesta) {
+                return $respuesta['resultado'] === false;
+            });
+
+            // Paso 2: Obtener los números de pregunta erradas
+            $numerosPreguntasErradas = array_column($errores, 'numeropregunta');
+
+            // Paso 3: Obtener información de cursos y temas para las preguntas erradas
+            $cursosConErrores = [];
+
+            if (!empty($numerosPreguntasErradas)) {
+                // Obtener relación pregunta-curso
+                $preguntasConCurso = DB::table('simulacro_pregunta')
+                    ->where('idsimulacro', $idSimulacro)
+                    ->whereIn('numeropregunta', $numerosPreguntasErradas)
+                    ->select('numeropregunta', 'idcurso')
+                    ->get()
+                    ->keyBy('numeropregunta');
+
+                // Agrupar errores por curso
+                $erroresPorCurso = [];
+
+                foreach ($errores as $error) {
+                    $numeroPregunta = $error['numeropregunta'];
+
+                    if (isset($preguntasConCurso[$numeroPregunta])) {
+                        $idcurso = $preguntasConCurso[$numeroPregunta]->idcurso;
+
+                        if (!isset($erroresPorCurso[$idcurso])) {
+                            $erroresPorCurso[$idcurso] = [];
+                        }
+
+                        $erroresPorCurso[$idcurso][] = $numeroPregunta;
+                    }
+                }
+
+                // Obtener detalles de los cursos con errores
+                if (!empty($erroresPorCurso)) {
+                    $cursosIds = array_keys($erroresPorCurso);
+
+                    // Obtener nombres de cursos
+                    $cursos = DB::table('curso')
+                        ->whereIn('idcurso', $cursosIds)
+                        ->pluck('nombrecurso', 'idcurso')
+                        ->toArray();
+
+                    // Obtener temas para cada curso
+                    $temasPorCurso = DB::table('tema')
+                        ->whereIn('idcurso', $cursosIds)
+                        ->select('idcurso', 'idtema', 'nombretema')
+                        ->get()
+                        ->groupBy('idcurso');
+
+                    // Construir estructura final
+                    foreach ($erroresPorCurso as $idcurso => $erroresCurso) {
+                        $temasArray = [];
+
+                        if (isset($temasPorCurso[$idcurso])) {
+                            foreach ($temasPorCurso[$idcurso] as $tema) {
+                                $temasArray[] = [
+                                    'idtema' => $tema->idtema,
+                                    'nombretema' => $tema->nombretema
+                                ];
+                            }
+                        }
+
+                        $cursosConErrores[] = [
+                            'nombrecurso' => $cursos[$idcurso] ?? 'Curso Desconocido',
+                            'idcurso' => $idcurso,
+                            'lista_errores' => $erroresCurso,
+                            'temas' => $temasArray
+                        ];
+                    }
+                }
+            }
+
+            // Paso 4: Dividir en partes de máximo 3 cursos cada una
+            $partesJSON = [];
+            $partesCursos = array_chunk($cursosConErrores, 3);
+
+            foreach ($partesCursos as $parte) {
+                $partesJSON[] = [
+                    'cursos' => $parte
+                ];
+            }
+
+            /*****************************************************************
+             * ENVÍO A API PYTHON Y PROCESAMIENTO DE RESPUESTA
+             *****************************************************************/
+            $feedbacksCompletos = [];
+            $temasRecomendadosConsolidados = [];
+            $feedbackCompleto = "";
+
+            // Obtener nombre del simulacro para construir ruta
+            $nombreSimulacro = DB::table('simulacro')
+                ->where('idsimulacro', $idSimulacro)
+                ->value('nombresimulacro');
+
+            //Obtener la fecha del simulacro
+            $fechaSimulacro = DB::table('simulacro')
+                ->where('idsimulacro', $idSimulacro)
+                ->value('created_at');
+
+            if ($nombreSimulacro) {
+                // Convertir el nombre a formato de carpeta
+                $nombreCarpetaSimulacro = strtolower(str_replace(
+                    [' ', '-', ':'],
+                    '_',
+                    $nombreSimulacro
+                ));
+
+                // Usar public_path para la carpeta simulacros dentro de public
+                $rutaBaseSimulacros = public_path('simulacros');
+                $rutaDirectorioSimulacro = $rutaBaseSimulacros . DIRECTORY_SEPARATOR . $nombreCarpetaSimulacro;
+
+                // Verificar si el directorio existe
+                if (is_dir($rutaDirectorioSimulacro)) {
+                    // Buscar archivo PDF que comienza con "examen_simulacro"
+                    $archivos = glob($rutaDirectorioSimulacro . DIRECTORY_SEPARATOR . 'examen_simulacro*.pdf');
+
+                    if (!empty($archivos)) {
+                        $rutaPdfSimulacro = $archivos[0];
+
+                        // Enviar cada parte a la API de Python
+                        foreach ($partesJSON as $parte) {
+                            // Convertir el array a JSON sin escapar caracteres Unicode
+                            $jsonData = json_encode($parte, JSON_UNESCAPED_UNICODE);
+
+                            // Enviar con el método multipart
+                            $responseFeedback = Http::asMultipart()
+                                ->attach('file', file_get_contents($rutaPdfSimulacro), basename($rutaPdfSimulacro))
+                                ->post('http://localhost:9000/feedback-simulacro', [
+                                    'datos' => $jsonData
+                                ]);
+
+                            if ($responseFeedback->successful()) {
+                                $respuestaPython = $responseFeedback->json();
+
+                                // Guardar feedback
+                                $feedbacksCompletos[] = $respuestaPython['feedback'];
+
+                                // Consolidar temas recomendados
+                                foreach ($respuestaPython['temas_recomendados'] as $cursoRecomendado) {
+                                    $idcurso = $cursoRecomendado['idcurso'];
+
+                                    if (!isset($temasRecomendadosConsolidados[$idcurso])) {
+                                        $temasRecomendadosConsolidados[$idcurso] = [
+                                            'nombrecurso' => $cursoRecomendado['nombrecurso'],
+                                            'idcurso' => $idcurso,
+                                            'temas' => []
+                                        ];
+                                    }
+
+                                    // Agregar temas evitando duplicados
+                                    foreach ($cursoRecomendado['temas'] as $tema) {
+                                        $idtema = $tema['idtema'];
+
+                                        // Verificar si el tema ya existe
+                                        $existe = false;
+                                        foreach ($temasRecomendadosConsolidados[$idcurso]['temas'] as $temaExistente) {
+                                            if ($temaExistente['idtema'] === $idtema) {
+                                                $existe = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if (!$existe) {
+                                            $temasRecomendadosConsolidados[$idcurso]['temas'][] = [
+                                                'idtema' => $idtema,
+                                                'nombretema' => $tema['nombretema']
+                                            ];
+                                        }
+                                    }
+                                }
+                            } else {
+                                $feedbacksCompletos[] = "Error al obtener feedback: " . $responseFeedback->status() . " - " . $responseFeedback->body();
+                            }
+                        }
+
+                        $feedbackCompleto = implode("\n\n", $feedbacksCompletos);
+                    } else {
+                        $feedbackCompleto = "PDF del simulacro no encontrado en: $rutaDirectorioSimulacro";
+                    }
+                } else {
+                    $feedbackCompleto = "Directorio de simulacro no encontrado: $rutaDirectorioSimulacro";
+                }
+            } else {
+                $feedbackCompleto = "No se encontró el nombre del simulacro en la base de datos";
+            }
+
+            // Convertir el array consolidado a lista indexada
+            $temasRecomendadosFinal = array_values($temasRecomendadosConsolidados);
+
+            /*****************************************************************
+             * INSERCIONES EN LA BASE DE DATOS
+             *****************************************************************/
+
+            // Insertar en estudiante_simulacro (con los nuevos campos)
             DB::table('estudiante_simulacro')->insert([
                 'idsimulacro' => $idSimulacro,
                 'idusuario' => $idUsuario,
                 'pdfhojarespuesta' => $rutaRelativa,
                 'puntajetotal' => $puntajetotal,
+                'feedback' => $feedbackCompleto,
+                'datossugerencias' => json_encode($temasRecomendadosFinal, JSON_UNESCAPED_UNICODE),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Insertar LUEGO en estudiante_respuesta
+            // Insertar en estudiante_respuesta
             DB::table('estudiante_respuesta')->insert($respuestasAInsertar);
 
-            // --------------------------------------------------------------------------------
-            // Aquí insertamos la notificación **solo para ESTE estudiante**
-            // --------------------------------------------------------------------------------
-
-            // Obtener el nombre del simulacro
-            $nombreSimulacro = DB::table('simulacro')
-                ->where('idsimulacro', $idSimulacro)
-                ->value('nombresimulacro');
-
-            $now = Carbon::now()->toDateTimeString();
+            // Insertar notificación
+            $now = now()->toDateTimeString();
+            $fechaCodificada = rawurlencode($fechaSimulacro);
             DB::table('notificacion')->insert([
                 'idusuario'   => $idUsuario,
                 'titulo'      => 'Calificación de simulacro disponible',
-                'mensaje'     => "Tus resultados y puntaje obtenidos en el «{$nombreSimulacro}» ya se encuentran disponibles. ¡Revisa los detalles!",
-                // Nuevamente, ajustar la URL si tu frontend tiene otra ruta:
-                'url_destino' => "/mis-calificaciones/{$idSimulacro}",
+                'mensaje'     => "Tus resultados y puntaje obtenidos en el «{$nombreSimulacro}» ya se encuentran disponibles, puedes revisarlos dando click en este mensaje o en la sección de Rendimiento",
+                'url_destino' => "/dashboard/rendimientoSimulacros/{$fechaCodificada}",
                 'leida'       => false,
                 'created_at'  => $now,
-                'updated_at'  => null,
+                'updated_at'  => $now,
             ]);
 
             DB::commit();
@@ -438,9 +633,11 @@ class SimulacroController extends Controller
                 'success' => false,
                 'message' => 'Error inesperado en el proceso',
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ], 500);
         }
     }
+
 
     public function obtenerDatosSimulacroEstudiantePorFecha($idusuario, $fecha)
     {

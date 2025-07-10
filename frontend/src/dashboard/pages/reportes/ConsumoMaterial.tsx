@@ -113,8 +113,10 @@ const ConsumoMaterial: React.FC = () => {
   const [timeData, setTimeData] = useState<MaterialTime[]>([]);
   const [consumedData, setConsumedData] = useState<MaterialTime[]>([]);
   const [loading, setLoading] = useState(true);
+  const [etlRunning, setEtlRunning] = useState(true); // Nuevo estado para controlar la ejecución del ETL
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const MIN_HIGH_USAGE_MIN = 5; // minutos para considerar "alto uso"
   const MIN_LOW_USAGE_MIN = 3; // minutos para "bajo uso"
@@ -122,20 +124,38 @@ const ConsumoMaterial: React.FC = () => {
   const MIN_LOW_FREQ = 3; // veces consumido para "baja frecuencia"
 
   useEffect(() => {
-    axios
-      .get("http://127.0.0.1:8000/api/report/consumoMaterial")
-      .then((response) => {
-        const { tiempo_uso, frecuencia_uso } = response.data.data;
+    // Primero: Ejecutar el ETL
+    const runETL = async () => {
+      try {
+        setEtlRunning(true);
+        setLoading(true);
+        setError(null);
+        
+        // 1. Ejecutar el ETL
+        const etlResponse = await axios.get("http://127.0.0.1:8000/api/runETL");
+        
+        if (!etlResponse.data.success) {
+          throw new Error("Error al ejecutar ETL: " + etlResponse.data.message);
+        }
+        
+        // 2. Una vez completado el ETL, obtener los datos del reporte
+        const reportResponse = await axios.get("http://127.0.0.1:8000/api/report/consumoMaterial");
+        
+        const { tiempo_uso, frecuencia_uso } = reportResponse.data.data;
         setTimeData(tiempo_uso);
         setConsumedData(frecuencia_uso);
         generateRecommendations(tiempo_uso, frecuencia_uso);
-      })
-      .catch((error) => {
-        console.error("Error fetching material consumption:", error);
-      })
-      .finally(() => {
+        
+      } catch (err: any) {
+        console.error("Error en el proceso:", err);
+        setError(err.response?.data?.message || err.message || "Error desconocido");
+      } finally {
+        setEtlRunning(false);
         setLoading(false);
-      });
+      }
+    };
+
+    runETL();
   }, []);
 
   const generateRecommendations = (
@@ -257,8 +277,29 @@ const ConsumoMaterial: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-600">Cargando datos...</p>
+      <div className="flex flex-col items-center justify-center h-[70vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mb-4"></div>
+        <p className="text-gray-600 text-lg">
+          {etlRunning ? "Consultando datos ..." : "Cargando datos..."}
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh] text-center p-8">
+        <div className="bg-red-100 rounded-full p-4 mb-4">
+          <FiX className="text-red-500 text-3xl" />
+        </div>
+        <h2 className="text-xl font-bold text-red-600 mb-2">Error en el proceso</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded-lg transition-colors"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

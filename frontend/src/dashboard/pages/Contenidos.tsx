@@ -110,7 +110,7 @@ const Contenidos: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
             disabled={page === 1}
-            className={`p-3 rounded-lg border border-cyan-600 text-cyan-600 hover:bg-cyan-50 disabled:opacity-50 disabled:cursor-not-allowed transition`}
+            className={`p-3 rounded-lg border border-cyan-600 text-cyan-600 hover:bg-cyan-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer`}
             aria-label="Página anterior"
           >
             <FaChevronLeft className="w-5 h-5" />
@@ -121,7 +121,7 @@ const Contenidos: React.FC = () => {
           <button
             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
             disabled={page === totalPages || totalPages === 0}
-            className={`p-3 rounded-lg border border-cyan-600 text-cyan-600 hover:bg-cyan-50 disabled:opacity-50 disabled:cursor-not-allowed transition`}
+            className={`p-3 rounded-lg border border-cyan-600 text-cyan-600 hover:bg-cyan-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer`}
             aria-label="Página siguiente"
           >
             <FaChevronRight className="w-5 h-5" />

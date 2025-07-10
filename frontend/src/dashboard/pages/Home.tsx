@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { FiX } from "react-icons/fi";
 import { FaLightbulb } from "react-icons/fa6";
+import { RiInputMethodLine } from "react-icons/ri";
 
 const Home: React.FC = () => {
   const { hasRole } = useAuth();
@@ -80,7 +81,7 @@ const Home: React.FC = () => {
               </p>
             </Link>
 
-                        {/* Nuevo Card: Gestión de Simulacros para Admin */}
+            {/* Nuevo Card: Gestión de Simulacros para Admin */}
             <Link to="/dashboard/simulacros" className={cardClasses}>
               <h3 className="font-bold mb-2 text-gray-700 flex items-center">
                 <FaClipboardCheck className="mr-2 text-cyan-500" /> Gestión de
@@ -119,7 +120,7 @@ const Home: React.FC = () => {
           <div className={gridClasses}>
             <Link to="/dashboard/contenido" className={cardClasses}>
               <h3 className="font-bold mb-2 text-gray-700 flex items-center">
-                <FaBookOpen className="mr-2 text-cyan-500" /> Cursos Disponibles
+                <FaBookOpen className="mr-2 text-cyan-500" /> Biblioteca Digital
               </h3>
               <p className="text-gray-600">
                 Revisa los cursos que tienes disponibles y los materiales que
@@ -127,10 +128,10 @@ const Home: React.FC = () => {
               </p>
             </Link>
 
-            <Link to="/dashboard/recomendaciones" className={cardClasses}>
+            <Link to="/dashboard/material-exclusivo" className={cardClasses}>
               <h3 className="font-bold mb-2 text-gray-700 flex items-center">
-                <FaLightbulb className="mr-2 text-cyan-500" /> Contenido
-                Recomendado
+                <FaLightbulb className="mr-2 text-cyan-500" /> Materiales
+                Recomendados
               </h3>
               <p className="text-gray-600">
                 Basado en tu rendimiento, se te sugiere contenido adicional para
@@ -138,10 +139,22 @@ const Home: React.FC = () => {
               </p>
             </Link>
 
+            <Link to="/dashboard/metodoEstudio" className={cardClasses}>
+              <h3 className="font-bold mb-2 text-gray-700 flex items-center">
+                <RiInputMethodLine className="mr-2 text-cyan-500" /> Método de
+                Estudio
+              </h3>
+              <p className="text-gray-600">
+                Basado en tus capacidades, puedes elegir qué cursos y temas
+                priorizar en tu estudio así como recomendaciones de técnicas de
+                estudio
+              </p>
+            </Link>
+
             <Link to="/dashboard/rendimientoSimulacros" className={cardClasses}>
               <h3 className="font-bold mb-2 text-gray-700 flex items-center">
-                <FaClipboardList className="mr-2 text-cyan-500" /> Rendimiento en
-                Simulacros
+                <FaClipboardList className="mr-2 text-cyan-500" /> Rendimiento
+                en Simulacros
               </h3>
               <p className="text-gray-600">
                 Consulta los resultados de tus simulacros realizados y revisa la
