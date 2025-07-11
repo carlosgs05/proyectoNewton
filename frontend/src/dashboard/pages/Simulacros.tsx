@@ -223,7 +223,7 @@ const Simulacros: FC = () => {
   // Obtener simulacros para la tabla (pestaña gestión)
   const fetchSimulacros = () => {
     axios
-      .get("http://127.0.0.1:8000/api/simulacros/listar", {
+      .get("https://proyectonewton-production.up.railway.app/api/simulacros/listar", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         },
@@ -241,7 +241,7 @@ const Simulacros: FC = () => {
   // Obtener simulacros para el select (endpoint solicitado)
   const fetchSimulacrosOptions = () => {
     axios
-      .get("http://127.0.0.1:8000/api/simulacros/realizados", {
+      .get("https://proyectonewton-production.up.railway.app/api/simulacros/realizados", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
         },
@@ -414,7 +414,7 @@ const Simulacros: FC = () => {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/api/simulacros/registrar",
+        "https://proyectonewton-production.up.railway.app/api/simulacros/registrar",
         formData,
         {
           headers: {
@@ -479,7 +479,7 @@ const Simulacros: FC = () => {
     setErrorEstudiantes("");
     try {
       const response = await axios.get(
-        `http://127.0.0.1:8000/api/simulacros/${idsimulacro}/estudiantes`,
+        `https://proyectonewton-production.up.railway.app/api/simulacros/${idsimulacro}/estudiantes`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -576,7 +576,7 @@ const Simulacros: FC = () => {
       formData.append("pdfhojarespuesta", archivoImagenCalificacion);
 
       const response = await axios.post(
-        "http://proyectonewton-production.up.railway.app/api/registrar-simulacro-estudiante",
+        "https://proyectonewton-production.up.railway.app/api/registrar-simulacro-estudiante",
         formData,
         {
           headers: {
@@ -721,7 +721,7 @@ const Simulacros: FC = () => {
                       <button
                         onClick={() =>
                           openPreview(
-                            `http://127.0.0.1:8000${
+                            `https://127.0.0.1:8000${
                               sim.pdfexamen.startsWith("/") ? "" : "/"
                             }${sim.pdfexamen}`
                           )
@@ -736,7 +736,7 @@ const Simulacros: FC = () => {
                       <button
                         onClick={() =>
                           openPreview(
-                            `http://127.0.0.1:8000${
+                            `https://127.0.0.1:8000${
                               sim.pdfrespuestas.startsWith("/") ? "" : "/"
                             }${sim.pdfrespuestas}`
                           )
@@ -751,7 +751,7 @@ const Simulacros: FC = () => {
                       <button
                         onClick={() =>
                           openPreview(
-                            `http://127.0.0.1:8000${
+                            `https://127.0.0.1:8000${
                               sim.pdfsolucionario.startsWith("/") ? "" : "/"
                             }${sim.pdfsolucionario}`
                           )
@@ -1179,7 +1179,7 @@ const Simulacros: FC = () => {
                         <button
                           onClick={() =>
                             openPreviewImage(
-                              `http://proyectonewton-production.up.railway.app/${
+                              `https://proyectonewton-production.up.railway.app/${
                                 est.pdfhojarespuesta.startsWith("/")
                                   ? est.pdfhojarespuesta.slice(1)
                                   : est.pdfhojarespuesta

@@ -100,7 +100,7 @@ const MaterialesAdmin: React.FC = () => {
   }, []);
 
   const fetchMateriales = () => {
-    const endpoint = `http://127.0.0.1:8000/api/temas/${tema.idtema}/materiales/listar`;
+    const endpoint = `https://proyectonewton-production.up.railway.app/api/temas/${tema.idtema}/materiales/listar`;
 
     // Agregar el log para ver el endpoint
     console.log("Endpoint de la solicitud:", endpoint);
@@ -255,8 +255,8 @@ const MaterialesAdmin: React.FC = () => {
     if (archivo) formData.append("archivo", archivo);
 
     const endpoint = isEditing
-      ? `http://127.0.0.1:8000/api/materiales/${formMaterial.idmaterial}/actualizar`
-      : `http://127.0.0.1:8000/api/temas/${tema.idtema}/materiales/registrar`;
+      ? `https://proyectonewton-production.up.railway.app/api/materiales/${formMaterial.idmaterial}/actualizar`
+      : `https://proyectonewton-production.up.railway.app/api/temas/${tema.idtema}/materiales/registrar`;
 
     try {
       const res = await axios.post(endpoint, formData, {
@@ -302,7 +302,7 @@ const MaterialesAdmin: React.FC = () => {
     if (confirm.isConfirmed) {
       try {
         const res = await axios.delete(
-          `http://127.0.0.1:8000/api/materiales/${id}/eliminar`
+          `https://proyectonewton-production.up.railway.app/api/materiales/${id}/eliminar`
         );
         if (res.data.success) {
           Swal.fire("Eliminado", res.data.message, "success");
@@ -316,7 +316,7 @@ const MaterialesAdmin: React.FC = () => {
 
   // Modal de Vista Previa
   const openPreviewModal = (material: Material) => {
-    setPreviewURL(`http://127.0.0.1:8000/${material.url}`);
+    setPreviewURL(`https://proyectonewton-production.up.railway.app/${material.url}`);
     setPreviewType(material.tipomaterial);
     setPreviewModalOpen(true);
   };
@@ -672,19 +672,19 @@ const MaterialesAdmin: React.FC = () => {
                   ) : isEditing && formMaterial.url ? (
                     formMaterial.tipomaterial === "Flashcards" ? (
                       <img
-                        src={`http://127.0.0.1:8000/${formMaterial.url}`}
+                        src={`https://proyectonewton-production.up.railway.app/${formMaterial.url}`}
                         className="w-full h-full object-contain"
                         alt="actual"
                       />
                     ) : formMaterial.tipomaterial === "Video" ? (
                       <video
-                        src={`http://127.0.0.1:8000/${formMaterial.url}`}
+                        src={`https://proyectonewton-production.up.railway.app/${formMaterial.url}`}
                         className="w-full h-full object-contain"
                         controls
                       />
                     ) : formMaterial.tipomaterial === "PDF" ? (
                       <iframe
-                        src={`http://127.0.0.1:8000/${formMaterial.url}`}
+                        src={`https://proyectonewton-production.up.railway.app/${formMaterial.url}`}
                         className="w-full h-full rounded-lg"
                         style={{ border: "none" }}
                         title="Vista previa PDF"

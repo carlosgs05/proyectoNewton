@@ -102,7 +102,7 @@ const CursoDetalle: React.FC = () => {
     // Cargar materiales para cada tema
     curso.temas.forEach((tema) => {
       axios
-        .get(`http://127.0.0.1:8000/api/temas/${tema.idtema}/materiales/listar`)
+        .get(`https://proyectonewton-production.up.railway.app/api/temas/${tema.idtema}/materiales/listar`)
         .then((res) => {
           if (res.data.success && Array.isArray(res.data.data)) {
             setTemasConMateriales((prev) => ({
@@ -218,7 +218,7 @@ const CursoDetalle: React.FC = () => {
   // Render contenido modal según tipo material
   const renderModalContent = () => {
     if (!modalMaterial) return null;
-    const src = `http://127.0.0.1:8000/${modalMaterial.url}`;
+    const src = `https://proyectonewton-production.up.railway.app/${modalMaterial.url}`;
 
     if (
       modalMaterial.tipomaterial === "PDF" ||

@@ -92,7 +92,7 @@ const DetallesSimulacro: React.FC = () => {
         }
 
         const response = await fetch(
-          `http://127.0.0.1:8000/api/simulacro/estudiante/${user.idusuario}/${fecha}`
+          `https://proyectonewton-production.up.railway.app/api/simulacro/estudiante/${user.idusuario}/${fecha}`
         );
 
         if (!response.ok) {
@@ -407,7 +407,7 @@ const DetallesSimulacro: React.FC = () => {
               {modalContent === "pdfexamen" && (
                 <div className="h-full">
                   <iframe
-                    src={`http://127.0.0.1:8000/${simulacro.pdfexamen}`}
+                    src={`https://proyectonewton-production.up.railway.app/${simulacro.pdfexamen}`}
                     width="100%"
                     height="100%"
                     className="border rounded-lg shadow-sm min-h-[500px]"
@@ -427,7 +427,7 @@ const DetallesSimulacro: React.FC = () => {
                       No podemos mostrar una vista previa de este archivo. Por favor, descárgalo para verlo.
                     </p>
                     <a 
-                      href={`http://127.0.0.1:8000/${simulacro.pdfrespuestas}`}
+                      href={`https://proyectonewton-production.up.railway.app/${simulacro.pdfrespuestas}`}
                       download
                       className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
@@ -440,7 +440,7 @@ const DetallesSimulacro: React.FC = () => {
               {modalContent === "pdfsolucionario" && (
                 <div className="h-full">
                   <iframe
-                    src={`http://127.0.0.1:8000/${simulacro.pdfsolucionario}`}
+                    src={`https://proyectonewton-production.up.railway.app/${simulacro.pdfsolucionario}`}
                     width="100%"
                     height="100%"
                     className="border rounded-lg shadow-sm min-h-[500px]"
@@ -453,7 +453,7 @@ const DetallesSimulacro: React.FC = () => {
                 <div className="h-full w-full flex items-center justify-center">
                   <div className="h-full w-full flex items-center justify-center">
                     <img
-                      src={`http://127.0.0.1:8000/${simulacro.pdfhojarespuesta}`}
+                      src={`https://proyectonewton-production.up.railway.app/${simulacro.pdfhojarespuesta}`}
                       width="100%"
                       height="100%"
                       className="border-0 "

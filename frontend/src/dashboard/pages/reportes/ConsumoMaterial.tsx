@@ -132,14 +132,14 @@ const ConsumoMaterial: React.FC = () => {
         setError(null);
         
         // 1. Ejecutar el ETL
-        const etlResponse = await axios.get("http://127.0.0.1:8000/api/runETL");
+        const etlResponse = await axios.get("https://proyectonewton-production.up.railway.app/api/runETL");
         
         if (!etlResponse.data.success) {
           throw new Error("Error al ejecutar ETL: " + etlResponse.data.message);
         }
         
         // 2. Una vez completado el ETL, obtener los datos del reporte
-        const reportResponse = await axios.get("http://127.0.0.1:8000/api/report/consumoMaterial");
+        const reportResponse = await axios.get("https://proyectonewton-production.up.railway.app/api/report/consumoMaterial");
         
         const { tiempo_uso, frecuencia_uso } = reportResponse.data.data;
         setTimeData(tiempo_uso);

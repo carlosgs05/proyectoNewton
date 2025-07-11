@@ -104,7 +104,7 @@ const RendimientoPorCurso: React.FC<Props> = ({ idusuario }) => {
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/cursos/datos-generales")
+      .get("https://proyectonewton-production.up.railway.app/api/cursos/datos-generales")
       .then((res) => {
         if (res.data.success) {
           const opts = res.data.data.map((c: any) => ({

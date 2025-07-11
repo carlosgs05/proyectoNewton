@@ -55,7 +55,7 @@ const RendimientoSimulacro: React.FC = () => {
         setError(null);
 
         // Ejecutar el proceso ETL
-        const etlResponse = await axios.get("http://127.0.0.1:8000/api/runETL");
+        const etlResponse = await axios.get("https://proyectonewton-production.up.railway.app/api/runETL");
 
         if (!etlResponse.data.success) {
           throw new Error("Error al ejecutar ETL: " + etlResponse.data.message);
@@ -84,7 +84,7 @@ const RendimientoSimulacro: React.FC = () => {
     setLoadingUsers(true);
     try {
       const res = await axios.get(
-        "http://127.0.0.1:8000/api/usuarios/estudiantes"
+        "https://proyectonewton-production.up.railway.app/api/usuarios/estudiantes"
       );
       if (res.data.success) {
         const options = res.data.data.map((u: any) => ({

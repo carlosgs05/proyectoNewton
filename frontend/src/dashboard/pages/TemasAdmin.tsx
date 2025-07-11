@@ -45,7 +45,7 @@ const TemasAdmin: React.FC = () => {
 
   const fetchTemas = () => {
     axios
-      .get("http://127.0.0.1:8000/api/cursos/listar")
+      .get("https://proyectonewton-production.up.railway.app/api/cursos/listar")
       .then((res) => {
         if (res.data.success) {
           const cursoData = res.data.data.find(
@@ -88,11 +88,11 @@ const TemasAdmin: React.FC = () => {
     setSaving(true);
     const request = editingTema
       ? axios.put(
-          `http://127.0.0.1:8000/api/temas/${editingTema.idtema}/actualizar`,
+          `https://proyectonewton-production.up.railway.app/api/temas/${editingTema.idtema}/actualizar`,
           formTema
         )
       : axios.post(
-          `http://127.0.0.1:8000/api/cursos/${curso.idcurso}/temas/registrar`,
+          `https://proyectonewton-production.up.railway.app/api/cursos/${curso.idcurso}/temas/registrar`,
           formTema
         );
 
@@ -126,7 +126,7 @@ const TemasAdmin: React.FC = () => {
     }).then((result: any) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://127.0.0.1:8000/api/temas/${tema.idtema}/eliminar`)
+          .delete(`https://proyectonewton-production.up.railway.app/api/temas/${tema.idtema}/eliminar`)
           .then((res) => {
             if (res.data.success) {
               Swal.fire("Eliminado", res.data.message, "success");

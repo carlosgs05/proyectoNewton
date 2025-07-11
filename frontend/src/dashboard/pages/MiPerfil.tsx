@@ -63,7 +63,7 @@ const MiPerfil: React.FC = () => {
     setLoadingPersonal(true);
     try {
       const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-      const response = await axios.put(`http://127.0.0.1:8000/api/usuarios/${user.idusuario}/personal-info`, formPersonal);
+      const response = await axios.put(`https://proyectonewton-production.up.railway.app/api/usuarios/${user.idusuario}/personal-info`, formPersonal);
 
       const updatedUser = {
         ...user,
@@ -105,7 +105,7 @@ const MiPerfil: React.FC = () => {
   const handleSavePassword = async () => {
     setLoadingPassword(true);
     try {
-      const response = await axios.put(`http://127.0.0.1:8000/api/usuarios/${user.idusuario}/password`, {
+      const response = await axios.put(`https://proyectonewton-production.up.railway.app/api/usuarios/${user.idusuario}/password`, {
         new_password: passwords.new,
         new_password_confirmation: passwords.confirm,
       });

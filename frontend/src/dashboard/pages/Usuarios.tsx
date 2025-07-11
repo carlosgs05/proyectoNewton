@@ -47,10 +47,10 @@ const Usuarios: React.FC = () => {
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/api/usuarios/listar")
+      .get("https://proyectonewton-production.up.railway.app/api/usuarios/listar")
       .then((res) => setUsuarios(res.data.data || []));
     axios
-      .get("http://127.0.0.1:8000/api/security-system-password")
+      .get("https://proyectonewton-production.up.railway.app/api/security-system-password")
       .then((res) => {
         if (typeof res.data.password === "string")
           setSecurityPassword(res.data.password);
@@ -131,7 +131,7 @@ const Usuarios: React.FC = () => {
         idrol: formData.idrol,
       };
       const res = await axios.post(
-        "http://127.0.0.1:8000/api/usuarios/crear",
+        "https://proyectonewton-production.up.railway.app/api/usuarios/crear",
         payload
       );
       const { correo, contrasena } = res.data.data.credenciales;

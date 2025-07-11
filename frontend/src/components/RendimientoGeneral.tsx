@@ -66,7 +66,7 @@ const RendimientoGeneral: React.FC<Props> = ({ idusuario }) => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/report/reporteSimulacrosPuntaje", {
+      const res = await axios.post("https://proyectonewton-production.up.railway.app/api/report/reporteSimulacrosPuntaje", {
         idusuario: id,
         mes: monthNames[mes],
         anio: anio,

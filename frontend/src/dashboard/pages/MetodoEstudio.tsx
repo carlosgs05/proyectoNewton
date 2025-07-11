@@ -129,7 +129,7 @@ const MetodoEstudio: React.FC = () => {
     const fetchAllCourses = async () => {
       try {
         const response = await axios.get<ApiResponse>(
-          "http://127.0.0.1:8000/api/cursos-temas"
+          "https://proyectonewton-production.up.railway.app/api/cursos-temas"
         );
         if (response.data.success && response.data.data) {
           setAllCourses(response.data.data);
@@ -151,7 +151,7 @@ const MetodoEstudio: React.FC = () => {
       setLoadingMetodo(true);
       try {
         const resp = await axios.get<MetodoAprendizajeResponse>(
-          `http://127.0.0.1:8000/api/metodos-aprendizaje/${user.idusuario}/${currentMonth}/${currentYear}`
+          `https://proyectonewton-production.up.railway.app/api/metodos-aprendizaje/${user.idusuario}/${currentMonth}/${currentYear}`
         );
 
         if (resp.data.success && resp.data.data) {
@@ -200,7 +200,7 @@ const MetodoEstudio: React.FC = () => {
     setLoadingWeakCourses(true);
     try {
       const resp = await axios.get<WeakCoursesResponse>(
-        `http://127.0.0.1:8000/api/cursos-recomendados/${user.idusuario}/${currentMonth}/${currentYear}`
+        `https://proyectonewton-production.up.railway.app/api/cursos-recomendados/${user.idusuario}/${currentMonth}/${currentYear}`
       );
       const weakData = resp.data.cursos || [];
 
@@ -335,7 +335,7 @@ const MetodoEstudio: React.FC = () => {
     try {
       // Registrar método de aprendizaje
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/metodos-aprendizaje/registrar",
+        "https://proyectonewton-production.up.railway.app/api/metodos-aprendizaje/registrar",
         {
           idusuario: user.idusuario,
           mes: currentMonth,

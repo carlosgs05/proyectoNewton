@@ -176,7 +176,7 @@ class SimulacroController extends Controller
                 'json_file',
                 file_get_contents($rutaJsonCursosTemporal),
                 "cursos_{$idSimulacro}.json"
-            )->post('http://localhost:9000/ordenar-cursos-preguntas');
+            )->post('https://proyectonewton.onrender.com/ordenar-cursos-preguntas');
 
             if ($responseCursosPreguntas->failed()) {
                 return response()->json([
@@ -192,7 +192,7 @@ class SimulacroController extends Controller
                 'file',
                 file_get_contents($carpetaDestino . '/' . $nombreRespuestas),
                 $nombreRespuestas
-            )->post('http://localhost:9000/obtener-respuestas-admin');
+            )->post('https://proyectonewton.onrender.com/obtener-respuestas-admin');
 
             if ($responseRespuestasAdmin->failed()) {
                 return response()->json([
@@ -338,7 +338,7 @@ class SimulacroController extends Controller
 
             // Llamar al servicio Python
             $response = Http::attach('file', file_get_contents($rutaAbsoluta), $nombreArchivo)
-                ->post('http://localhost:9000/obtener-respuestas-estudiantes');
+                ->post('https://proyectonewton.onrender.com/obtener-respuestas-estudiantes');
 
             if ($response->failed()) {
                 DB::rollBack();
@@ -526,7 +526,7 @@ class SimulacroController extends Controller
                             // Enviar con el método multipart
                             $responseFeedback = Http::asMultipart()
                                 ->attach('file', file_get_contents($rutaPdfSimulacro), basename($rutaPdfSimulacro))
-                                ->post('http://localhost:9000/feedback-simulacro', [
+                                ->post('https://proyectonewton.onrender.com/feedback-simulacro', [
                                     'datos' => $jsonData
                                 ]);
 

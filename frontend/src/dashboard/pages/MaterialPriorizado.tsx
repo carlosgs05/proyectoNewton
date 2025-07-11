@@ -153,7 +153,7 @@ const MaterialPriorizado = () => {
 
       try {
         const response = await axios.get<ApiResponse>(
-          `http://127.0.0.1:8000/api/obtener-materiales-exclusivos/${user.idusuario}/${currentMonth}/${currentYear}`
+          `https://proyectonewton-production.up.railway.app/api/obtener-materiales-exclusivos/${user.idusuario}/${currentMonth}/${currentYear}`
         );
 
         if (response.data.success && response.data.data) {
