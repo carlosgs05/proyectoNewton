@@ -39,7 +39,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       try {
         // Trae todas las notificaciones (leídas y no leídas)
         const resp = await axios.get(
-          `http://proyectonewton-production.up.railway.app/api/notificaciones/${user?.idusuario}`
+          `https://proyectonewton-production.up.railway.app/api/notificaciones/${user?.idusuario}`
         );
         if (resp.data.success) {
           const data: Notificacion[] = resp.data.data;
@@ -96,7 +96,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       if (!noti.leida) {
         // Marca como leída en backend
         await axios.put(
-          `http://proyectonewton-production.up.railway.app/api/notificaciones/${noti.idnotificacion}/leer`
+          `https://proyectonewton-production.up.railway.app/api/notificaciones/${noti.idnotificacion}/leer`
         );
         // Actualiza localmente
         setNotificaciones((prev) =>

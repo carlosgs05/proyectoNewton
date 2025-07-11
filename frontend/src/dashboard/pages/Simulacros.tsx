@@ -264,7 +264,7 @@ const Simulacros: FC = () => {
   const fetchUsuariosEstudiantesOptions = async () => {
     try {
       const response = await axios.get(
-        "http://proyectonewton-production.up.railway.app/api/usuarios/estudiantes",
+        "https://proyectonewton-production.up.railway.app/api/usuarios/estudiantes",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,

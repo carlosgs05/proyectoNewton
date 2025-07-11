@@ -47,7 +47,7 @@ const Contenidos: React.FC = () => {
 
   const fetchCursos = () => {
     axios
-      .get("http://proyectonewton-production.up.railway.app/api/cursos/listar")
+      .get("https://proyectonewton-production.up.railway.app/api/cursos/listar")
       .then((res) => {
         if (res.data.success) {
           setCursos(res.data.data);

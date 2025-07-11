@@ -127,7 +127,7 @@ const RendimientoPorCurso: React.FC<Props> = ({ idusuario }) => {
     }
 
     axios
-      .post("http://proyectonewton-production.up.railway.app/api/report/simulacroCursoDetalle", payload)
+      .post("https://proyectonewton-production.up.railway.app/api/report/simulacroCursoDetalle", payload)
       .then((res) => {
         setData(res.data.success ? res.data.data : []);
       })
