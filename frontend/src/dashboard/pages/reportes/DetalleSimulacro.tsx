@@ -183,7 +183,7 @@ const DetallesSimulacro: React.FC = () => {
         </div>
         <div className="mt-6">
           <Link
-            to="/mis-calificaciones"
+            to="/dashboard/rendimientoSimulacros"
             className="inline-flex items-center text-cyan-700 hover:text-cyan-900"
           >
             <FiChevronLeft className="mr-1" /> Volver a mis calificaciones
