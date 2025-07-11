@@ -3,11 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://carlosgs05.github.io/proyectoNewton",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
@@ -16,9 +19,12 @@
     "buffer": "^6.0.3",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
-    "react": "^18.3.1",
+    "gh-pages": "^6.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.1.0",
+    "react-gauge-chart": "^0.5.1",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^6.4.0",
+    "react-router-dom": "^7.5.2",
     "react-select": "^5.10.1",
     "recharts": "^2.15.3",
     "serve": "^14.2.4",
@@ -30,8 +36,9 @@
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@types/file-saver": "^2.0.7",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/react-gauge-chart": "^0.4.3",
     "@types/xlsx": "^0.0.35",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.22.0",
