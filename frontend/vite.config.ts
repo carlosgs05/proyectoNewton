@@ -4,5 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/proyectoNewton/', // Aquí colocas el nombre de tu repositorio
   plugins: [react(), tailwindcss()],
 })
