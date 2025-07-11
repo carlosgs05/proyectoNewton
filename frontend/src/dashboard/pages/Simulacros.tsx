@@ -264,7 +264,7 @@ const Simulacros: FC = () => {
   const fetchUsuariosEstudiantesOptions = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8000/api/usuarios/estudiantes",
+        "http://proyectonewton-production.up.railway.app/api/usuarios/estudiantes",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("authToken") || ""}`,
@@ -576,7 +576,7 @@ const Simulacros: FC = () => {
       formData.append("pdfhojarespuesta", archivoImagenCalificacion);
 
       const response = await axios.post(
-        "http://localhost:8000/api/registrar-simulacro-estudiante",
+        "http://proyectonewton-production.up.railway.app/api/registrar-simulacro-estudiante",
         formData,
         {
           headers: {
@@ -1179,7 +1179,7 @@ const Simulacros: FC = () => {
                         <button
                           onClick={() =>
                             openPreviewImage(
-                              `http://localhost:8000/${
+                              `http://proyectonewton-production.up.railway.app/${
                                 est.pdfhojarespuesta.startsWith("/")
                                   ? est.pdfhojarespuesta.slice(1)
                                   : est.pdfhojarespuesta

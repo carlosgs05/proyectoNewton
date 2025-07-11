@@ -39,7 +39,7 @@ const CambioPasswordInicial: React.FC = () => {
     }
 
     try {
-      await axios.post("http://localhost:8000/api/activar-cuenta", {
+      await axios.post("http://proyectonewton-production.up.railway.app/api/activar-cuenta", {
         user_id: userId,
         new_password: formData.new_password,
         new_password_confirmation: formData.confirm_password,

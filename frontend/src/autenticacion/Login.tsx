@@ -68,7 +68,7 @@ const Login: React.FC = () => {
 
     try {
       const { data } = await axios.post<LoginResponse>(
-        "http://localhost:8000/api/login",
+        "http://proyectonewton-production.up.railway.app/api/login",
         formData
       );
 
