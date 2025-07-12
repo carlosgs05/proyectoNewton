@@ -32,11 +32,11 @@ class RolController extends Controller
                 'nombre' => 'required|string|max:20|unique:dbnewton.rol,nombre'
             ]);
 
-            DB::beginTransaction();
+            DB::connection('dbnewton')->beginTransaction();
             
             $rol = Rol::create($validated);
             
-            DB::commit();
+            DB::connection('dbnewton')->commit();
 
             return response()->json([
                 'success' => true,
@@ -51,7 +51,7 @@ class RolController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            DB::rollBack();
+            DB::connection('dbnewton')->rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error al crear rol: ' . $e->getMessage()

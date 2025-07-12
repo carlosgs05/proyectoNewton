@@ -57,7 +57,8 @@ class SimulacroController extends Controller
     {
         try {
             // Usamos join para obtener datos de usuario y puntaje + hoja_respuesta del simulacro
-            $estudiantes = DB::table('estudiante_simulacro as es')
+            $estudiantes = DB::connection('dbnewton')
+                ->table('estudiante_simulacro as es')
                 ->join('usuario as u', 'es.idusuario', '=', 'u.idusuario')
                 ->where('es.idsimulacro', '=', $idsimulacro)
                 ->select(
@@ -98,7 +99,8 @@ class SimulacroController extends Controller
         $nombreSimulacroInput = $request->input('nombresimulacro');
 
         // Validar que no exista ya un simulacro con ese nombre
-        $existeSimulacro = DB::table('simulacro')
+        $existeSimulacro = DB::connection('dbnewton')
+            ->table('simulacro')
             ->where('nombresimulacro', $nombreSimulacroInput)
             ->exists();
 
@@ -131,16 +133,17 @@ class SimulacroController extends Controller
 
         try {
             // Insertar y obtener idsimulacro con RETURNING idsimulacro (PostgreSQL)
-            $result = DB::select(
-                'INSERT INTO simulacro (nombresimulacro, pdfexamen, pdfrespuestas, pdfsolucionario, created_at) VALUES (?, ?, ?, ?, ?) RETURNING idsimulacro',
-                [
-                    $nombreSimulacroInput,
-                    $rutaExamen,
-                    $rutaRespuestas,
-                    $rutaSolucionario,
-                    $fecha . ' 00:00:00',
-                ]
-            );
+            $result = DB::connection('dbnewton')
+                ->select(
+                    'INSERT INTO simulacro (nombresimulacro, pdfexamen, pdfrespuestas, pdfsolucionario, created_at) VALUES (?, ?, ?, ?, ?) RETURNING idsimulacro',
+                    [
+                        $nombreSimulacroInput,
+                        $rutaExamen,
+                        $rutaRespuestas,
+                        $rutaSolucionario,
+                        $fecha . ' 00:00:00',
+                    ]
+                );
 
             if (empty($result)) {
                 return response()->json([
@@ -248,14 +251,15 @@ class SimulacroController extends Controller
                 ];
             }
 
-            DB::table('simulacro_pregunta')->insert($insertSimulacroPreguntas);
+            DB::connection('dbnewton')->table('simulacro_pregunta')->insert($insertSimulacroPreguntas);
 
             // --------------------------------------------------------------------------------
             // Aquí insertamos la notificación **para todos los estudiantes (rol = 2)**
             // --------------------------------------------------------------------------------
 
             // 1) Obtenemos todos los idusuario cuyo rol sea 2 (estudiante)
-            $estudiantes = DB::table('usuario')
+            $estudiantes = DB::connection('dbnewton')
+                ->table('usuario')
                 ->where('idrol', 2)
                 ->pluck('idusuario');
 
@@ -276,7 +280,7 @@ class SimulacroController extends Controller
 
             if (!empty($notificacionesMasivas)) {
                 // Insertamos todas en bloque
-                DB::table('notificacion')->insert($notificacionesMasivas);
+                DB::connection('dbnewton')->table('notificacion')->insert($notificacionesMasivas);
             }
 
             // Borra archivo temporal JSON
@@ -309,7 +313,8 @@ class SimulacroController extends Controller
         $idUsuario = $request->idusuario;
 
         // Validar duplicado
-        $existe = DB::table('estudiante_simulacro')
+        $existe = DB::connection('dbnewton')
+            ->table('estudiante_simulacro')
             ->where('idsimulacro', $idSimulacro)
             ->where('idusuario', $idUsuario)
             ->exists();
@@ -322,7 +327,7 @@ class SimulacroController extends Controller
         }
 
         try {
-            DB::beginTransaction();
+            DB::connection('dbnewton')->beginTransaction();
 
             // Procesar archivo
             $archivo = $request->file('pdfhojarespuesta');
@@ -341,7 +346,7 @@ class SimulacroController extends Controller
                 ->post('https://proyectonewton.onrender.com/obtener-respuestas-estudiantes');
 
             if ($response->failed()) {
-                DB::rollBack();
+                DB::connection('dbnewton')->rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Error al comunicarse con el servicio de reconocimiento.',
@@ -352,7 +357,8 @@ class SimulacroController extends Controller
             $respuestas = $response->json()['data'] ?? [];
 
             // Obtener respuestas correctas
-            $correctasDB = DB::table('simulacro_pregunta')
+            $correctasDB = DB::connection('dbnewton')
+                ->table('simulacro_pregunta')
                 ->where('idsimulacro', $idSimulacro)
                 ->pluck('opcioncorrecta', 'numeropregunta')
                 ->toArray();
@@ -407,7 +413,8 @@ class SimulacroController extends Controller
 
             if (!empty($numerosPreguntasErradas)) {
                 // Obtener relación pregunta-curso
-                $preguntasConCurso = DB::table('simulacro_pregunta')
+                $preguntasConCurso = DB::connection('dbnewton')
+                    ->table('simulacro_pregunta')
                     ->where('idsimulacro', $idSimulacro)
                     ->whereIn('numeropregunta', $numerosPreguntasErradas)
                     ->select('numeropregunta', 'idcurso')
@@ -436,13 +443,15 @@ class SimulacroController extends Controller
                     $cursosIds = array_keys($erroresPorCurso);
 
                     // Obtener nombres de cursos
-                    $cursos = DB::table('curso')
+                    $cursos = DB::connection('dbnewton')
+                        ->table('curso')
                         ->whereIn('idcurso', $cursosIds)
                         ->pluck('nombrecurso', 'idcurso')
                         ->toArray();
 
                     // Obtener temas para cada curso
-                    $temasPorCurso = DB::table('tema')
+                    $temasPorCurso = DB::connection('dbnewton')
+                        ->table('tema')
                         ->whereIn('idcurso', $cursosIds)
                         ->select('idcurso', 'idtema', 'nombretema')
                         ->get()
@@ -489,12 +498,14 @@ class SimulacroController extends Controller
             $feedbackCompleto = "";
 
             // Obtener nombre del simulacro para construir ruta
-            $nombreSimulacro = DB::table('simulacro')
+            $nombreSimulacro = DB::connection('dbnewton')
+                ->table('simulacro')
                 ->where('idsimulacro', $idSimulacro)
                 ->value('nombresimulacro');
 
             //Obtener la fecha del simulacro
-            $fechaSimulacro = DB::table('simulacro')
+            $fechaSimulacro = DB::connection('dbnewton')
+                ->table('simulacro')
                 ->where('idsimulacro', $idSimulacro)
                 ->value('created_at');
 
@@ -593,24 +604,25 @@ class SimulacroController extends Controller
              *****************************************************************/
 
             // Insertar en estudiante_simulacro (con los nuevos campos)
-            DB::table('estudiante_simulacro')->insert([
-                'idsimulacro' => $idSimulacro,
-                'idusuario' => $idUsuario,
-                'pdfhojarespuesta' => $rutaRelativa,
-                'puntajetotal' => $puntajetotal,
-                'feedback' => $feedbackCompleto,
-                'datossugerencias' => json_encode($temasRecomendadosFinal, JSON_UNESCAPED_UNICODE),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            DB::connection('dbnewton')
+                ->table('estudiante_simulacro')->insert([
+                    'idsimulacro' => $idSimulacro,
+                    'idusuario' => $idUsuario,
+                    'pdfhojarespuesta' => $rutaRelativa,
+                    'puntajetotal' => $puntajetotal,
+                    'feedback' => $feedbackCompleto,
+                    'datossugerencias' => json_encode($temasRecomendadosFinal, JSON_UNESCAPED_UNICODE),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
             // Insertar en estudiante_respuesta
-            DB::table('estudiante_respuesta')->insert($respuestasAInsertar);
+            DB::connection('dbnewton')->table('estudiante_respuesta')->insert($respuestasAInsertar);
 
             // Insertar notificación
             $now = now()->toDateTimeString();
             $fechaCodificada = rawurlencode($fechaSimulacro);
-            DB::table('notificacion')->insert([
+            DB::connection('dbnewton')->table('notificacion')->insert([
                 'idusuario'   => $idUsuario,
                 'titulo'      => 'Calificación de simulacro disponible',
                 'mensaje'     => "Tus resultados y puntaje obtenidos en el «{$nombreSimulacro}» ya se encuentran disponibles, puedes revisarlos dando click en este mensaje o en la sección de Rendimiento",
@@ -620,7 +632,7 @@ class SimulacroController extends Controller
                 'updated_at'  => $now,
             ]);
 
-            DB::commit();
+            DB::connection('dbnewton')->commit();
 
             return response()->json([
                 'success' => true,
@@ -628,7 +640,7 @@ class SimulacroController extends Controller
                 'puntajetotal' => $puntajetotal,
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
+            DB::connection('dbnewton')->rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error inesperado en el proceso',
@@ -643,7 +655,8 @@ class SimulacroController extends Controller
     {
         try {
             // Buscar el simulacro que contiene la fecha en su nombre
-            $simulacro = DB::table('simulacro')
+            $simulacro = DB::connection('dbnewton')
+                ->table('simulacro')
                 ->where('nombresimulacro', 'like', '%' . $fecha . '%')
                 ->first();
 
@@ -656,7 +669,8 @@ class SimulacroController extends Controller
             }
 
             // Obtener los datos del simulacro registrado en la tabla estudiante_simulacro
-            $estudianteSimulacro = DB::table('estudiante_simulacro')
+            $estudianteSimulacro = DB::connection('dbnewton')
+                ->table('estudiante_simulacro')
                 ->where('idsimulacro', $simulacro->idsimulacro)
                 ->where('idusuario', $idusuario)
                 ->first();
@@ -670,7 +684,8 @@ class SimulacroController extends Controller
             }
 
             // Obtener los datos del simulacro desde la tabla simulacro
-            $simulacroDatos = DB::table('simulacro')
+            $simulacroDatos = DB::connection('dbnewton')
+                ->table('simulacro')
                 ->where('idsimulacro', $simulacro->idsimulacro)
                 ->first();
 
