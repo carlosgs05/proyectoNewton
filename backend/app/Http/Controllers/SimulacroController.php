@@ -648,6 +648,7 @@ class SimulacroController extends Controller
                 ->first();
 
             if (!$simulacro) {
+                // Si no se encuentra el simulacro con la fecha proporcionada
                 return response()->json([
                     'success' => false,
                     'message' => 'No se encontró un simulacro con la fecha proporcionada.',
@@ -661,6 +662,7 @@ class SimulacroController extends Controller
                 ->first();
 
             if (!$estudianteSimulacro) {
+                // Si no se encuentra el registro del estudiante para el simulacro
                 return response()->json([
                     'success' => false,
                     'message' => 'El estudiante no tiene registros para el simulacro con la fecha proporcionada.',
@@ -671,6 +673,14 @@ class SimulacroController extends Controller
             $simulacroDatos = DB::table('simulacro')
                 ->where('idsimulacro', $simulacro->idsimulacro)
                 ->first();
+
+            if (!$simulacroDatos) {
+                // Si no se encuentra información en la tabla de simulacros
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontraron los datos del simulacro.',
+                ], 404);
+            }
 
             // Preparar el formato de respuesta
             $responseData = [
@@ -691,11 +701,19 @@ class SimulacroController extends Controller
             ];
 
             return response()->json($responseData);
-        } catch (\Exception $e) {
-            Log::error('Error en SimulacroController@obtenerDatosSimulacroEstudiantePorFecha: ' . $e->getMessage());
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Captura errores relacionados con la base de datos (SQL)
+            Log::error('Error en SimulacroController@obtenerDatosSimulacroEstudiantePorFecha (DB Query): ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener los datos del simulacro del estudiante',
+                'message' => 'Error en la base de datos: ' . $e->getMessage(),
+            ], 500);
+        } catch (\Exception $e) {
+            // Captura cualquier otro tipo de error general
+            Log::error('Error en SimulacroController@obtenerDatosSimulacroEstudiantePorFecha (General): ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error inesperado: ' . $e->getMessage(),
             ], 500);
         }
     }
