@@ -8,7 +8,7 @@ import re
 from collections import defaultdict
 
 # Configurar API key
-genai.configure(api_key="AIzaSyCBFd1kU0irpvTGMERq_gwH1B519WDTds4")
+genai.configure(api_key="AIzaSyA2ULQHZFboBeO3WUS9KtgK4oS1oX4Hfro")
 
 router = APIRouter()
 
